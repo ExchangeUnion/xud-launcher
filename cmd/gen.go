@@ -33,27 +33,27 @@ func init() {
 	genCmd.PersistentFlags().BoolVar(&api, "api", false, "Expose xud-docker API (REST + WebSocket)")
 
 	// [Add capability to restrict flag values to a set of allowed values](https://github.com/spf13/pflag/issues/236)
-	bitcoind := service.NewService("bitcoind")
-	bitcoind.ConfigureFlags(genCmd)
+	services := []string{
+		"bitcoind",
+		"litecoind",
+		"geth",
+		"lndbtc",
+		"lndltc",
+		"connext",
+		"xud",
+		"arby",
+		"boltz",
+		"webui",
+		"proxy",
+	}
 
-	litecoind := service.NewService("litecoind")
-	litecoind.ConfigureFlags(genCmd)
-
-	geth := service.NewService("geth")
-	geth.ConfigureFlags(genCmd)
-
-	lndbtc := service.NewService("lndbtc")
-	lndbtc.ConfigureFlags(genCmd)
-
-	lndltc := service.NewService("lndltc")
-	lndltc.ConfigureFlags(genCmd)
-
-
-	genCmd.PersistentFlags().String("xud.expose-ports", "", "Expose xud service ports to your host machine")
-	genCmd.PersistentFlags().String("xud.preserve-config", "", "Preserve xud xud.conf file during updates")
-
-	arby := service.NewService("arby")
-	arby.ConfigureFlags(genCmd)
+	for _, name := range services {
+		s := service.NewService(name)
+		err := s.ConfigureFlags(genCmd)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	genCmd.PersistentFlags().Bool("boltz.disabled", true, "Enable/Disable boltz service")
 

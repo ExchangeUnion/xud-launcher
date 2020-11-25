@@ -78,6 +78,12 @@ func (t Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["NETWORK"] = network
 	t.Environment["CHAIN"] = t.Chain
 
+	if t.config.PreserveConfig {
+		t.Environment["PRESERVE_CONFIG"] = "true"
+	} else {
+		t.Environment["PRESERVE_CONFIG"] = "false"
+	}
+
 	if config.ExternalIp != "" {
 		t.Environment["EXTERNAL_IP"] = config.ExternalIp
 	}

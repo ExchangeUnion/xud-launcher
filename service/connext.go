@@ -35,6 +35,8 @@ func (t Connext) ConfigureFlags(cmd *cobra.Command) error {
 		return err
 	}
 
+	// configure connext specified flags here
+
 	return nil
 }
 

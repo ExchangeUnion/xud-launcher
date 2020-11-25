@@ -87,6 +87,10 @@ func NewService(name string) Service {
 		return newLnd("lndbtc", "bitcoin")
 	} else if name == "lndltc" {
 		return newLnd("lndltc","litecoin")
+	} else if name == "connext" {
+		return newConnext("connext")
+	} else if name == "xud" {
+		return newXud("xud")
 	}
 
 	return nil

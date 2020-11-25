@@ -58,7 +58,7 @@ func (t Xud) Apply(config *SharedConfig, services map[string]Service) error {
 		return err
 	}
 
-	// connext apply
+	// xud apply
 	t.Environment["NETWORK"] = network
 	t.Environment["NODE_ENV"] = "production"
 

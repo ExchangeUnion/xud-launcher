@@ -55,8 +55,6 @@ func init() {
 		}
 	}
 
-	genCmd.PersistentFlags().Bool("boltz.disabled", true, "Enable/Disable boltz service")
-
 	genCmd.PersistentFlags().Bool("webui.disabled", true, "Enable/Disable webui service")
 	genCmd.PersistentFlags().String("webui.expose-ports", "", "Expose webui service ports to your host machine")
 

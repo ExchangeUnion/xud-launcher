@@ -23,10 +23,8 @@ type Litecoind struct {
 	config LitecoindConfig
 }
 
-func NewLitecoind() Litecoind {
-	return Litecoind{
-		config: LitecoindConfig{},
-	}
+func newLitecoind() Litecoind {
+	return Litecoind{}
 }
 
 func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {

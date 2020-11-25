@@ -23,10 +23,8 @@ type Bitcoind struct {
 	config BitcoindConfig
 }
 
-func NewBitcoind() Bitcoind {
-	return Bitcoind{
-		config: BitcoindConfig{},
-	}
+func newBitcoind() Bitcoind {
+	return Bitcoind{}
 }
 
 func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {

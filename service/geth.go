@@ -24,10 +24,8 @@ type Geth struct {
 	config GethConfig
 }
 
-func NewGeth() Geth {
-	return Geth{
-		config: GethConfig{},
-	}
+func newGeth() Geth {
+	return Geth{}
 }
 
 func (t Geth) ConfigureFlags(cmd *cobra.Command) error {

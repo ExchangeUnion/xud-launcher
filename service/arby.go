@@ -29,14 +29,16 @@ type Arby struct {
 	config ArbyConfig
 }
 
-func NewArby() Arby {
-	return Arby{
-		config: ArbyConfig{},
-	}
+func newArby() Arby {
+	return Arby{}
 }
 
 func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("arby", &t.config.BaseConfig, cmd)
+	err := configureCommonFlags("arby", &t.config.BaseConfig, &BaseConfig{
+		Disable: true,
+		ExposePorts: []string{},
+		Dir: "./data/arby",
+	}, cmd)
 	if err != nil {
 		return err
 	}
@@ -59,6 +61,10 @@ func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
 	cmd.PersistentFlags().StringVar(&t.config.Margin, "arby.margin", "0.04", "Trade margin")
 
 	return nil
+}
+
+func (t Arby) GetConfig() interface{} {
+	return t.config
 }
 
 func (t Arby) Apply(network string, services map[string]Service) error {

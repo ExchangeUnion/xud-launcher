@@ -53,6 +53,21 @@ func (t Base) Apply(config *BaseConfig, dir string, network string, services map
 }
 
 type Service interface {
+	ConfigureFlags(cmd *cobra.Command) error
 	GetConfig() interface{}
 	Apply(network string, services map[string]Service) error
+}
+
+func NewService(name string) Service {
+	if name == "arby" {
+		return newArby()
+	} else if name == "bitcoind" {
+		return newBitcoind()
+	} else if name == "litecoind" {
+		return newLitecoind()
+	} else if name == "geth" {
+		return newGeth()
+	}
+
+	return nil
 }

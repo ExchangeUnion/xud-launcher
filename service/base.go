@@ -75,9 +75,7 @@ type Service interface {
 }
 
 func NewService(name string) Service {
-	if name == "arby" {
-		return newArby("arby")
-	} else if name == "bitcoind" {
+	if name == "bitcoind" {
 		return newBitcoind("bitcoind")
 	} else if name == "litecoind" {
 		return newLitecoind("litecoind")
@@ -91,6 +89,12 @@ func NewService(name string) Service {
 		return newConnext("connext")
 	} else if name == "xud" {
 		return newXud("xud")
+	} else if name == "arby" {
+		return newArby("arby")
+	} else if name == "boltz" {
+		return newBoltz("boltz")
+	} else if name == "webui" {
+		return newWebui("webui")
 	}
 
 	return nil

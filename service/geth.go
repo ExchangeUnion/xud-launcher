@@ -1,5 +1,84 @@
 package service
 
+import (
+	"errors"
+	"fmt"
+	"github.com/spf13/cobra"
+)
+
 type GethConfig struct {
+	BaseConfig
+
 	Mode string
+	Rpchost string
+	Rpcport uint16
+	InfuraProjectId string
+	InfuraProjectSecret string
+	Cache string
+	AncientChaindataDir string
+}
+
+type Geth struct {
+	Base
+
+	config GethConfig
+}
+
+func NewGeth() Geth {
+	return Geth{
+		config: GethConfig{},
+	}
+}
+
+func (t Geth) ConfigureFlags(cmd *cobra.Command) error {
+	err := configureCommonFlags("geth", &t.config.BaseConfig, &BaseConfig{
+		Disable: false,
+		ExposePorts: []string{},
+		Dir: "./data/geth",
+	}, cmd)
+	if err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringVar(&t.config.Mode, "geth.mode", "light", "Geth service mode")
+	cmd.PersistentFlags().StringVar(&t.config.Rpchost, "geth.rpchost", "", "External geth RPC hostname")
+	cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "geth.rpcport", 0, "External geth RPC port")
+	cmd.PersistentFlags().StringVar(&t.config.InfuraProjectId, "geth.infura-project-id", "", "Infura geth provider project ID")
+	cmd.PersistentFlags().StringVar(&t.config.InfuraProjectSecret, "geth.infura-project-secret", "", "Infura geth provider project secret")
+	cmd.PersistentFlags().StringVar(&t.config.Cache, "geth.cache", "", "Geth cache size")
+	cmd.PersistentFlags().StringVar(&t.config.AncientChaindataDir, "geth.ancient-chaindata-dir", "", "Specify the container's volume mapping ancient chaindata directory. Can be located on a slower HDD.")
+
+	return nil
+}
+
+func (t Geth) GetConfig() interface{} {
+	return t.config
+}
+
+func (t Geth) Apply(network string, services map[string]Service) error {
+
+	err := t.Base.Apply(&t.config.BaseConfig, "/root/.ethereum", network, services)
+	if err != nil {
+		return err
+	}
+
+	if network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	t.Environment["NETWORK"] = network
+
+	if t.config.AncientChaindataDir != "" {
+		volume := fmt.Sprintf("%s:/root/.ethereum-ancient-chaindata", t.config.AncientChaindataDir)
+		t.Volumes = append(t.Volumes, volume)
+		t.Environment["CUSTOM_ANCIENT_CHAINDATA"] = "true"
+	}
+
+	if t.config.Cache != "" {
+		t.Command = append(t.Command, fmt.Sprintf("--cache %s", t.config.Cache))
+	}
+
+	// TODO select ethProvider in light mode
+
+	return nil
 }

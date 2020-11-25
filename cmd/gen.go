@@ -39,14 +39,6 @@ func init() {
 	litecoind := service.NewLitecoind()
 	litecoind.ConfigureFlags(genCmd)
 
-	genCmd.PersistentFlags().String("geth.mode", "light", "Geth service mode")
-	genCmd.PersistentFlags().String("geth.rpchost", "", "External geth RPC hostname")
-	genCmd.PersistentFlags().Uint16("geth.rpcport", 0, "External geth RPC port")
-	genCmd.PersistentFlags().String("geth.infura-project-id", "", "Infura geth provider project ID")
-	genCmd.PersistentFlags().String("geth.infura-project-secret", "", "Infura geth provider project secret")
-	genCmd.PersistentFlags().String("geth.expose-ports", "", "Expose geth service ports to your host machine")
-	genCmd.PersistentFlags().String("geth.cache", "", "Geth cache size")
-
 	genCmd.PersistentFlags().String("lndbtc.mode", "native", "Lndbtc service mode")
 	genCmd.PersistentFlags().String("lndbtc.expose-ports", "", "Expose lndbtc service ports to your host machine")
 	genCmd.PersistentFlags().Bool("lndbtc.preserve-config", false, "Preserve lndbtc lnd.conf file during updates")

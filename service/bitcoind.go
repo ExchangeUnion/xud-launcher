@@ -30,7 +30,11 @@ func NewBitcoind() Bitcoind {
 }
 
 func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("bitcoind", &t.config.BaseConfig, cmd)
+	err := configureCommonFlags("bitcoind", &t.config.BaseConfig, &BaseConfig{
+		Disable: false,
+		ExposePorts: []string{},
+		Dir: "./data/bitcoind",
+	}, cmd)
 	if err != nil {
 		return err
 	}
@@ -46,7 +50,16 @@ func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Bitcoind) Apply(network string) error {
+func (t Bitcoind) GetConfig() interface{} {
+	return t.config
+}
+
+func (t Bitcoind) Apply(network string, services map[string]Service) error {
+
+	err := t.Base.Apply(&t.config.BaseConfig, "/root/.bitcoind", network, services)
+	if err != nil {
+		return err
+	}
 
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)

@@ -30,7 +30,11 @@ func NewLitecoind() Litecoind {
 }
 
 func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("arby", &t.config.BaseConfig, cmd)
+	err := configureCommonFlags("litecoind", &t.config.BaseConfig, &BaseConfig{
+		Disable: false,
+		ExposePorts: []string{},
+		Dir: "./data/litecoind",
+	}, cmd)
 	if err != nil {
 		return err
 	}
@@ -46,7 +50,16 @@ func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Litecoind) Apply(network string) error {
+func (t Litecoind) GetConfig() interface{} {
+	return t.config
+}
+
+func (t Litecoind) Apply(network string, services map[string]Service) error {
+
+	err := t.Base.Apply(&t.config.BaseConfig, "/root/.litecoind", network, services)
+	if err != nil {
+		return err
+	}
 
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)

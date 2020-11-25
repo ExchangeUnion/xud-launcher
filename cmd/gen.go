@@ -42,10 +42,6 @@ func init() {
 	geth := service.NewService("geth")
 	geth.ConfigureFlags(genCmd)
 
-	genCmd.PersistentFlags().String("lndbtc.mode", "native", "Lndbtc service mode")
-	genCmd.PersistentFlags().String("lndbtc.expose-ports", "", "Expose lndbtc service ports to your host machine")
-	genCmd.PersistentFlags().Bool("lndbtc.preserve-config", false, "Preserve lndbtc lnd.conf file during updates")
-
 	genCmd.PersistentFlags().String("lndltc.mode", "native", "Lndltc service mode")
 	genCmd.PersistentFlags().String("lndltc.expose-ports", "", "Expose lndltc service ports to your host machine")
 	genCmd.PersistentFlags().Bool("lndltc.preserve-config", false, "Preserve lndltc lnd.conf file during updates")

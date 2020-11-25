@@ -27,17 +27,22 @@ type Arby struct {
 	Base
 
 	config ArbyConfig
+	Name   string
 }
 
-func newArby() Arby {
-	return Arby{}
+func newArby(name string) Arby {
+	return Arby{
+		Base: Base{
+			Name: name,
+		},
+	}
 }
 
 func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("arby", &t.config.BaseConfig, &BaseConfig{
-		Disable: true,
+	err := configureBaseFlags("arby", &t.config.BaseConfig, &BaseConfig{
+		Disable:     true,
 		ExposePorts: []string{},
-		Dir: "./data/arby",
+		Dir:         "./data/arby",
 	}, cmd)
 	if err != nil {
 		return err
@@ -67,8 +72,21 @@ func (t Arby) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Arby) Apply(network string, services map[string]Service) error {
+func (t Arby) Apply(config *SharedConfig, services map[string]Service) error {
+	network := config.Network
 
+	// validation
+	if network != "simnet" && network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	// base apply
+	err := t.Base.Apply(&t.config.BaseConfig, "/root/.arby", network, services)
+	if err != nil {
+		return err
+	}
+
+	// arby apply
 	var rpcPort string
 
 	t.Environment["NETWORK"] = network

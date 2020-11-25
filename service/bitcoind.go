@@ -23,15 +23,19 @@ type Bitcoind struct {
 	config BitcoindConfig
 }
 
-func newBitcoind() Bitcoind {
-	return Bitcoind{}
+func newBitcoind(name string) Bitcoind {
+	return Bitcoind{
+		Base: Base{
+			Name: name,
+		},
+	}
 }
 
 func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("bitcoind", &t.config.BaseConfig, &BaseConfig{
-		Disable: false,
+	err := configureBaseFlags("bitcoind", &t.config.BaseConfig, &BaseConfig{
+		Disable:     false,
 		ExposePorts: []string{},
-		Dir: "./data/bitcoind",
+		Dir:         "./data/bitcoind",
 	}, cmd)
 	if err != nil {
 		return err
@@ -52,17 +56,21 @@ func (t Bitcoind) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Bitcoind) Apply(network string, services map[string]Service) error {
+func (t Bitcoind) Apply(config *SharedConfig, services map[string]Service) error {
+	network := config.Network
 
+	// validation
+	if network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	// base apply
 	err := t.Base.Apply(&t.config.BaseConfig, "/root/.bitcoind", network, services)
 	if err != nil {
 		return err
 	}
 
-	if network != "testnet" && network != "mainnet" {
-		return errors.New("invalid network: " + network)
-	}
-
+	// bitcoind apply
 	t.Environment["NETWORK"] = network
 
 	t.Command = append(t.Command,

@@ -11,7 +11,7 @@ type BaseConfig struct {
 	Dir         string
 }
 
-func configureCommonFlags(service string, config *BaseConfig, defaultValues *BaseConfig, cmd *cobra.Command) error {
+func configureBaseFlags(service string, config *BaseConfig, defaultValues *BaseConfig, cmd *cobra.Command) error {
 	cmd.PersistentFlags().BoolVar(
 		&config.Disable,
 		fmt.Sprintf("%s.disabled", service),
@@ -34,7 +34,18 @@ func configureCommonFlags(service string, config *BaseConfig, defaultValues *Bas
 	return nil
 }
 
+type SharedConfig struct {
+	Network string
+	SimnetDir string
+	TestnetDir string
+	MainnetDir string
+	ExternalIp string
+	Dev bool
+	UseLocalImages string
+}
+
 type Base struct {
+	Name string
 	Image       string
 	Environment map[string]string
 	Command     []string
@@ -52,21 +63,30 @@ func (t Base) Apply(config *BaseConfig, dir string, network string, services map
 	return nil
 }
 
+func (t Base) GetName() string {
+	return t.Name
+}
+
 type Service interface {
 	ConfigureFlags(cmd *cobra.Command) error
 	GetConfig() interface{}
-	Apply(network string, services map[string]Service) error
+	GetName() string
+	Apply(config *SharedConfig, services map[string]Service) error
 }
 
 func NewService(name string) Service {
 	if name == "arby" {
-		return newArby()
+		return newArby("arby")
 	} else if name == "bitcoind" {
-		return newBitcoind()
+		return newBitcoind("bitcoind")
 	} else if name == "litecoind" {
-		return newLitecoind()
+		return newLitecoind("litecoind")
 	} else if name == "geth" {
-		return newGeth()
+		return newGeth("geth")
+	} else if name == "lndbtc" {
+		return newLnd("lndbtc", "bitcoin")
+	} else if name == "lndltc" {
+		return newLnd("lndltc","litecoin")
 	}
 
 	return nil

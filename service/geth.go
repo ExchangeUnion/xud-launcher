@@ -9,12 +9,12 @@ import (
 type GethConfig struct {
 	BaseConfig
 
-	Mode string
-	Rpchost string
-	Rpcport uint16
-	InfuraProjectId string
+	Mode                string
+	Rpchost             string
+	Rpcport             uint16
+	InfuraProjectId     string
 	InfuraProjectSecret string
-	Cache string
+	Cache               string
 	AncientChaindataDir string
 }
 
@@ -24,15 +24,19 @@ type Geth struct {
 	config GethConfig
 }
 
-func newGeth() Geth {
-	return Geth{}
+func newGeth(name string) Geth {
+	return Geth{
+		Base: Base{
+			Name: name,
+		},
+	}
 }
 
 func (t Geth) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("geth", &t.config.BaseConfig, &BaseConfig{
-		Disable: false,
+	err := configureBaseFlags("geth", &t.config.BaseConfig, &BaseConfig{
+		Disable:     false,
 		ExposePorts: []string{},
-		Dir: "./data/geth",
+		Dir:         "./data/geth",
 	}, cmd)
 	if err != nil {
 		return err
@@ -53,17 +57,21 @@ func (t Geth) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Geth) Apply(network string, services map[string]Service) error {
+func (t Geth) Apply(config *SharedConfig, services map[string]Service) error {
+	network := config.Network
 
+	// validation
+	if network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	// base apply
 	err := t.Base.Apply(&t.config.BaseConfig, "/root/.ethereum", network, services)
 	if err != nil {
 		return err
 	}
 
-	if network != "testnet" && network != "mainnet" {
-		return errors.New("invalid network: " + network)
-	}
-
+	// geth apply
 	t.Environment["NETWORK"] = network
 
 	if t.config.AncientChaindataDir != "" {

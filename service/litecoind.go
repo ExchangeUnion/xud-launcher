@@ -8,13 +8,13 @@ import (
 type LitecoindConfig struct {
 	BaseConfig
 
-	Mode string
-	Rpchost string
-	Rpcport uint16
-	Rpcuser string
-	Rpcpass string
+	Mode           string
+	Rpchost        string
+	Rpcport        uint16
+	Rpcuser        string
+	Rpcpass        string
 	Zmqpubrawblock string
-	Zmqpubrawtx string
+	Zmqpubrawtx    string
 }
 
 type Litecoind struct {
@@ -23,15 +23,19 @@ type Litecoind struct {
 	config LitecoindConfig
 }
 
-func newLitecoind() Litecoind {
-	return Litecoind{}
+func newLitecoind(name string) Litecoind {
+	return Litecoind{
+		Base: Base{
+			Name: name,
+		},
+	}
 }
 
 func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("litecoind", &t.config.BaseConfig, &BaseConfig{
-		Disable: false,
+	err := configureBaseFlags("litecoind", &t.config.BaseConfig, &BaseConfig{
+		Disable:     false,
 		ExposePorts: []string{},
-		Dir: "./data/litecoind",
+		Dir:         "./data/litecoind",
 	}, cmd)
 	if err != nil {
 		return err
@@ -52,17 +56,21 @@ func (t Litecoind) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Litecoind) Apply(network string, services map[string]Service) error {
+func (t Litecoind) Apply(config *SharedConfig, services map[string]Service) error {
+	network := config.Network
 
+	// validation
+	if network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	// base apply
 	err := t.Base.Apply(&t.config.BaseConfig, "/root/.litecoind", network, services)
 	if err != nil {
 		return err
 	}
 
-	if network != "testnet" && network != "mainnet" {
-		return errors.New("invalid network: " + network)
-	}
-
+	// litecoind apply
 	t.Environment["NETWORK"] = network
 
 	return nil

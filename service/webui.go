@@ -29,13 +29,13 @@ func (t Webui) ConfigureFlags(cmd *cobra.Command) error {
 	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/boltz",
+		Dir:         "./data/webui",
 	}, cmd)
 	if err != nil {
 		return err
 	}
 
-	// configure boltz specified flags here
+	// configure webui specified flags here
 
 	return nil
 }

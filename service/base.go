@@ -95,6 +95,8 @@ func NewService(name string) Service {
 		return newBoltz("boltz")
 	} else if name == "webui" {
 		return newWebui("webui")
+	} else if name == "proxy" {
+		return newProxy("proxy")
 	}
 
 	return nil

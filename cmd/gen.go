@@ -36,7 +36,8 @@ func init() {
 	bitcoind := service.NewBitcoind()
 	bitcoind.ConfigureFlags(genCmd)
 
-
+	litecoind := service.NewLitecoind()
+	litecoind.ConfigureFlags(genCmd)
 
 	genCmd.PersistentFlags().String("geth.mode", "light", "Geth service mode")
 	genCmd.PersistentFlags().String("geth.rpchost", "", "External geth RPC hostname")

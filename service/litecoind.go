@@ -54,24 +54,5 @@ func (t Litecoind) Apply(network string) error {
 
 	t.Environment["NETWORK"] = network
 
-	t.Command = append(t.Command,
-		"-server",
-		"-rpcuser=xu",
-		"-rpcpassword=xu",
-		"-disablewallet",
-		"-txindex",
-		"-zmqpubrawblock=tcp://0.0.0.0:28332",
-		"-zmqpubrawtx=tcp://0.0.0.0:28333",
-		"-logips",
-		"-rpcallowip=::/0",
-		"-rpcbind=0.0.0.0",
-	)
-
-	if network == "testnet" {
-		t.Command = append(t.Command, "-rpcport=18332", "-testnet")
-	} else { // mainnet
-		t.Command = append(t.Command, "-rpcport=8332")
-	}
-
 	return nil
 }

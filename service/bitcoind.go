@@ -32,7 +32,7 @@ func newBitcoind(name string) Bitcoind {
 }
 
 func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags("bitcoind", &t.config.BaseConfig, &BaseConfig{
+	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/bitcoind",

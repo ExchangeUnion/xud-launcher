@@ -32,7 +32,7 @@ func newLitecoind(name string) Litecoind {
 }
 
 func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags("litecoind", &t.config.BaseConfig, &BaseConfig{
+	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/litecoind",

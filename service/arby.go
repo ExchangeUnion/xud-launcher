@@ -39,7 +39,7 @@ func newArby(name string) Arby {
 }
 
 func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags("arby", &t.config.BaseConfig, &BaseConfig{
+	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
 		Disable:     true,
 		ExposePorts: []string{},
 		Dir:         "./data/arby",

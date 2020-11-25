@@ -42,11 +42,12 @@ func init() {
 	geth := service.NewService("geth")
 	geth.ConfigureFlags(genCmd)
 
-	genCmd.PersistentFlags().String("lndltc.mode", "native", "Lndltc service mode")
-	genCmd.PersistentFlags().String("lndltc.expose-ports", "", "Expose lndltc service ports to your host machine")
-	genCmd.PersistentFlags().Bool("lndltc.preserve-config", false, "Preserve lndltc lnd.conf file during updates")
+	lndbtc := service.NewService("lndbtc")
+	lndbtc.ConfigureFlags(genCmd)
 
-	genCmd.PersistentFlags().String("connext.expose-ports", "", "Expose connext service ports to your host machine")
+	lndltc := service.NewService("lndltc")
+	lndltc.ConfigureFlags(genCmd)
+
 
 	genCmd.PersistentFlags().String("xud.expose-ports", "", "Expose xud service ports to your host machine")
 	genCmd.PersistentFlags().String("xud.preserve-config", "", "Preserve xud xud.conf file during updates")

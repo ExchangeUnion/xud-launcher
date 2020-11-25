@@ -33,7 +33,7 @@ func newGeth(name string) Geth {
 }
 
 func (t Geth) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags("geth", &t.config.BaseConfig, &BaseConfig{
+	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/geth",

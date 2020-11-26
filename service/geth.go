@@ -63,7 +63,7 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.ethereum")
+	err := t.Base.Apply("/root/.ethereum", network)
 	if err != nil {
 		return err
 	}

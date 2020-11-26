@@ -50,7 +50,7 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.xud")
+	err := t.Base.Apply("/root/.xud", network)
 	if err != nil {
 		return err
 	}

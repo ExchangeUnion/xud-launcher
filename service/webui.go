@@ -50,7 +50,7 @@ func (t *Webui) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.webui")
+	err := t.Base.Apply("/root/.webui", network)
 	if err != nil {
 		return err
 	}

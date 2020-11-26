@@ -51,7 +51,7 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.boltz")
+	err := t.Base.Apply("/root/.boltz", network)
 	if err != nil {
 		return err
 	}

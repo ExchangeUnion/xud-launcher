@@ -71,20 +71,25 @@ func (t *Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) err
 	cmd.PersistentFlags().StringVar(
 		&t.config.Image,
 		fmt.Sprintf("%s.image", t.Name),
-		defaultValues.Image,
+		"",
 		fmt.Sprintf("Specify the image of %s service", t.Name),
 	)
 
 	return nil
 }
 
-func (t *Base) Apply(dir string) error {
+func (t *Base) Apply(dir string, network string) error {
 	for _, port := range t.config.ExposePorts {
 		t.Ports = append(t.Ports, port)
 	}
 
 	t.Volumes = append(t.Volumes, fmt.Sprintf("%s:%s", t.config.Dir, dir))
-	t.Image = t.config.Image
+
+	if t.config.Image == "" {
+		t.Image = images[network][t.GetName()]
+	} else {
+		t.Image = t.config.Image
+	}
 
 	return nil
 }

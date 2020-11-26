@@ -66,7 +66,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.litecoind")
+	err := t.Base.Apply("/root/.lnd", network)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/reliveyy/xud-launcher/service"
 	"github.com/spf13/cobra"
 	"log"
+	"os"
 	"path"
 	"strings"
 )
@@ -53,6 +54,77 @@ func init() {
 	rootCmd.AddCommand(genCmd)
 }
 
+func bypass(network string, s service.Service) bool {
+	name := s.GetName()
+
+	if network == "simnet" {
+		if name == "bitcoind" || name == "litecoind" || name == "geth" || name == "boltz" {
+			return true
+		}
+	}
+
+	if s.Disabled() {
+		return true
+	}
+
+	return false
+}
+
+func Export(services []service.Service) string {
+	var result = ""
+
+	result += "version: \"2.4\"\n"
+
+	result += "services:\n"
+
+	for _, s := range services {
+
+		result += fmt.Sprintf("  %s:\n", s.GetName())
+
+		result += fmt.Sprintf("    image: %s\n", s.GetImage())
+
+		if len(s.GetCommand()) > 0 {
+			result += fmt.Sprintf("    command: >\n")
+			for _, arg := range s.GetCommand() {
+				result += fmt.Sprintf("      %s\n", arg)
+			}
+		}
+
+		if len(s.GetEnvironment()) > 0 {
+			result += fmt.Sprintf("    environment:\n")
+			for key, value := range s.GetEnvironment() {
+				if strings.Contains(value, "\n") {
+					// multiline value
+					result += fmt.Sprintf("      - >\n")
+					result += fmt.Sprintf("        %s=\n", key)
+					for _, line := range strings.Split(value, "\n") {
+						result += fmt.Sprintf("        %s\n", line)
+					}
+				} else {
+					result += fmt.Sprintf("      - %s=%s\n", key, value)
+				}
+
+			}
+		}
+
+		if len(s.GetVolumes()) > 0 {
+			result += fmt.Sprintf("    volumes:\n")
+			for _, volume := range s.GetVolumes() {
+				result += fmt.Sprintf("      - %s\n", volume)
+			}
+		}
+
+		if len(s.GetPorts()) > 0 {
+			result += fmt.Sprintf("    ports:\n")
+			for _, port := range s.GetPorts() {
+				result += fmt.Sprintf("      - %s\n", port)
+			}
+		}
+	}
+
+	return result
+}
+
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate docker-compose.yml file from xud-docker configurations",
@@ -64,74 +136,33 @@ var genCmd = &cobra.Command{
 		}
 		homeDir = path.Join(homeDir, ".xud-docker")
 		//generalConf := path.Join(homeDir, "xud-docker.conf")
-		//networkDir := path.Join(homeDir, network)
+		networkDir := path.Join(homeDir, network)
 		//networkConf := path.Join(networkDir, fmt.Sprintf("%s.conf", network))
 
 		config.Network = network
 
-		println("version: 2.4")
-		println("services:")
+		var validServices = []service.Service{}
 
-		for _, name := range names {
-			service := services[name]
-
-			if network == "simnet" {
-				if name == "bitcoind" || name == "litecoind" || name == "geth" || name == "boltz" {
-					continue
-				}
-			}
-
-			if service.Disabled() {
+		for name, s := range services {
+			if bypass(network, s) {
 				continue
 			}
-
-			err = service.Apply(&config, services)
+			err = s.Apply(&config, services)
 			if err != nil {
 				log.Fatalf("%s: %s", name, err)
 			}
-
-			fmt.Printf("  %s:\n", name)
-
-			fmt.Printf("    image: %s\n", service.GetImage())
-
-			if len(service.GetCommand()) > 0 {
-				fmt.Printf("    command: >\n")
-				for _, arg := range service.GetCommand() {
-					fmt.Printf("      %s\n", arg)
-				}
-			}
-
-			if len(service.GetEnvironment()) > 0 {
-				fmt.Printf("    environment:\n")
-				for key, value := range service.GetEnvironment() {
-					if strings.Contains(value, "\n") {
-						// multiline value
-						fmt.Printf("      - >\n")
-						fmt.Printf("        %s=\n", key)
-						for _, line := range strings.Split(value, "\n") {
-							fmt.Printf("        %s\n", line)
-						}
-					} else {
-						fmt.Printf("      - %s=%s\n", key, value)
-					}
-
-				}
-			}
-
-			if len(service.GetVolumes()) > 0 {
-				fmt.Printf("    volumes:\n")
-				for _, volume := range service.GetVolumes() {
-					fmt.Printf("      - %s\n", volume)
-				}
-			}
-
-			if len(service.GetPorts()) > 0 {
-				fmt.Printf("    ports:\n")
-				for _, port := range service.GetPorts() {
-					fmt.Printf("      - %s\n", port)
-				}
-			}
-
+			validServices = append(validServices, s)
 		}
+
+		composeFile := path.Join(networkDir, "docker-compose.yml")
+		f, err := os.Create(composeFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		yml := Export(validServices)
+		f.WriteString(yml)
+
+		fmt.Printf("Exported to %s\n", composeFile)
 	},
 }

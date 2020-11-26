@@ -63,7 +63,7 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.bitcoind")
+	err := t.Base.Apply("/root/.bitcoind", network)
 	if err != nil {
 		return err
 	}

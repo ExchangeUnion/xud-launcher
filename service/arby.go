@@ -77,7 +77,7 @@ func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.arby")
+	err := t.Base.Apply("/root/.arby", network)
 	if err != nil {
 		return err
 	}

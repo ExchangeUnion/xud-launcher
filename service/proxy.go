@@ -51,7 +51,7 @@ func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.proxy")
+	err := t.Base.Apply("/root/.proxy", network)
 	if err != nil {
 		return err
 	}

@@ -27,7 +27,7 @@ func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/connext",
+		Image:       "connextproject/vector_node:837bafa1",
 	}, cmd)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error
 	}
 
 	// base apply
-	err := t.Base.Apply("/app/connext-store")
+	err := t.Base.Apply("/app/connext-store", network)
 	if err != nil {
 		return err
 	}

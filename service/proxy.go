@@ -57,6 +57,22 @@ func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// proxy apply
+	t.Volumes = append(t.Volumes,
+		"/var/run/docker.sock:/var/run/docker.sock",
+		"./logs/config.sh:/root/config.sh",
+		"./data/xud:/root/.xud",
+		"./data/lndbtc:/root/.lndbtc",
+		"./data/lndltc:/root/.lndltc",
+	)
+
+	switch network {
+	case "simnet":
+		t.Ports = append(t.Ports, "127.0.0.1:28889:8080")
+	case "testnet":
+		t.Ports = append(t.Ports, "127.0.0.1:18889:8080")
+	case "mainnet":
+		t.Ports = append(t.Ports, "127.0.0.1:8889:8080")
+	}
 
 	return nil
 }

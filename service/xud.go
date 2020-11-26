@@ -65,5 +65,20 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 		t.Environment["PRESERVE_CONFIG"] = "false"
 	}
 
+	t.Volumes = append(t.Volumes,
+		"./data/lndbtc:/root/.lndbtc",
+		"./data/lndltc:/root/.lndltc",
+		"/:/mnt/hostfs",
+	)
+
+	switch network {
+	case "simnet":
+		t.Ports = append(t.Ports, "28885")
+	case "testnet":
+		t.Ports = append(t.Ports, "18885")
+	case "mainnet":
+		t.Ports = append(t.Ports, "8885")
+	}
+
 	return nil
 }

@@ -41,17 +41,18 @@ func newBase(name string) Base {
 		Command:     []string{},
 		Ports:       []string{},
 		Volumes:     []string{},
+
+		config: BaseConfig{},
 	}
 }
 
-func (t Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) error {
+func (t *Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) error {
 	cmd.PersistentFlags().BoolVar(
 		&t.config.Disable,
 		fmt.Sprintf("%s.disabled", t.Name),
 		defaultValues.Disable,
 		fmt.Sprintf("Enable/Disable %s service", t.Name),
 	)
-	t.config.Disable = defaultValues.Disable
 
 	cmd.PersistentFlags().StringSliceVar(
 		&t.config.ExposePorts,
@@ -59,7 +60,6 @@ func (t Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) erro
 		defaultValues.ExposePorts,
 		fmt.Sprintf("Expose %s service ports to your host machine", t.Name),
 	)
-	t.config.ExposePorts = defaultValues.ExposePorts
 
 	cmd.PersistentFlags().StringVar(
 		&t.config.Dir,
@@ -67,7 +67,6 @@ func (t Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) erro
 		defaultValues.Dir,
 		fmt.Sprintf("Specify the main data directory of %s service", t.Name),
 	)
-	t.config.Dir = defaultValues.Dir
 
 	cmd.PersistentFlags().StringVar(
 		&t.config.Image,
@@ -75,12 +74,11 @@ func (t Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) erro
 		defaultValues.Image,
 		fmt.Sprintf("Specify the image of %s service", t.Name),
 	)
-	t.config.Image = defaultValues.Image
 
 	return nil
 }
 
-func (t Base) Apply(dir string) error {
+func (t *Base) Apply(dir string) error {
 	for _, port := range t.config.ExposePorts {
 		t.Ports = append(t.Ports, port)
 	}
@@ -91,31 +89,31 @@ func (t Base) Apply(dir string) error {
 	return nil
 }
 
-func (t Base) GetName() string {
+func (t *Base) GetName() string {
 	return t.Name
 }
 
-func (t Base) GetImage() string {
+func (t *Base) GetImage() string {
 	return t.Image
 }
 
-func (t Base) GetCommand() []string {
+func (t *Base) GetCommand() []string {
 	return t.Command
 }
 
-func (t Base) GetEnvironment() map[string]string {
+func (t *Base) GetEnvironment() map[string]string {
 	return t.Environment
 }
 
-func (t Base) GetVolumes() []string {
+func (t *Base) GetVolumes() []string {
 	return t.Volumes
 }
 
-func (t Base) GetPorts() []string {
+func (t *Base) GetPorts() []string {
 	return t.Ports
 }
 
-func (t Base) Disabled() bool {
+func (t *Base) Disabled() bool {
 	return t.config.Disable
 }
 
@@ -136,27 +134,38 @@ type Service interface {
 func NewService(name string) Service {
 	switch name {
 	case "bitcoind":
-		return newBitcoind("bitcoind")
+		s := newBitcoind("bitcoind")
+		return &s
 	case "litecoind":
-		return newLitecoind("litecoind")
+		s := newLitecoind("litecoind")
+		return &s
 	case "geth":
-		return newGeth("geth")
+		s := newGeth("geth")
+		return &s
 	case "lndbtc":
-		return newLnd("lndbtc", "bitcoin")
+		s := newLnd("lndbtc", "bitcoin")
+		return &s
 	case "lndltc":
-		return newLnd("lndltc", "litecoin")
+		s := newLnd("lndltc", "litecoin")
+		return &s
 	case "connext":
-		return newConnext("connext")
+		s := newConnext("connext")
+		return &s
 	case "xud":
-		return newXud("xud")
+		s := newXud("xud")
+		return &s
 	case "arby":
-		return newArby("arby")
+		s := newArby("arby")
+		return &s
 	case "boltz":
-		return newBoltz("boltz")
+		s := newBoltz("boltz")
+		return &s
 	case "webui":
-		return newWebui("webui")
+		s := newWebui("webui")
+		return &s
 	case "proxy":
-		return newProxy("proxy")
+		s := newProxy("proxy")
+		return &s
 	}
 
 	return nil

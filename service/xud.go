@@ -21,11 +21,12 @@ func newXud(name string) Xud {
 	}
 }
 
-func (t Xud) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/xud",
+		Image:       "exchangeunion/xud",
 	}, cmd)
 	if err != nil {
 		return err
@@ -36,11 +37,11 @@ func (t Xud) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Xud) GetConfig() interface{} {
+func (t *Xud) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Xud) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

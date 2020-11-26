@@ -28,11 +28,12 @@ func newGeth(name string) Geth {
 	}
 }
 
-func (t Geth) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Geth) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/geth",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/geth",
 	}, cmd)
 	if err != nil {
 		return err
@@ -49,11 +50,11 @@ func (t Geth) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Geth) GetConfig() interface{} {
+func (t *Geth) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Geth) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

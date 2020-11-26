@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -21,11 +22,12 @@ func newBoltz(name string) Boltz {
 	}
 }
 
-func (t Boltz) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Boltz) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/boltz",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/boltz",
 	}, cmd)
 	if err != nil {
 		return err
@@ -36,11 +38,11 @@ func (t Boltz) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Boltz) GetConfig() interface{} {
+func (t *Boltz) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Boltz) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

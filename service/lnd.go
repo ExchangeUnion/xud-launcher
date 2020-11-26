@@ -26,11 +26,12 @@ func newLnd(name string, chain string) Lnd {
 	}
 }
 
-func (t Lnd) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       fmt.Sprintf("exchangeunion/%s", t.Name),
 	}, cmd)
 	if err != nil {
 		return err
@@ -52,11 +53,11 @@ func (t Lnd) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Lnd) GetConfig() interface{} {
+func (t *Lnd) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Lnd) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

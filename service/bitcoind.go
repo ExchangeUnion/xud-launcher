@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -27,11 +28,12 @@ func newBitcoind(name string) Bitcoind {
 	}
 }
 
-func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/bitcoind",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/bitcoind",
 	}, cmd)
 	if err != nil {
 		return err
@@ -48,11 +50,11 @@ func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Bitcoind) GetConfig() interface{} {
+func (t *Bitcoind) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Bitcoind) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

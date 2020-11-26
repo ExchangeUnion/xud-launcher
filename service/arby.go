@@ -33,12 +33,12 @@ func newArby(name string) Arby {
 	}
 }
 
-func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     true,
 		ExposePorts: []string{},
-		Dir:         "./data/arby",
-		Image:       "exchangeunion/arby:latest",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/arby",
 	}, cmd)
 	if err != nil {
 		return err
@@ -64,11 +64,11 @@ func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Arby) GetConfig() interface{} {
+func (t *Arby) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Arby) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

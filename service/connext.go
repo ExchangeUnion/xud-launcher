@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -21,11 +22,12 @@ func newConnext(name string) Connext {
 	}
 }
 
-func (t Connext) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/connext",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/connext",
 	}, cmd)
 	if err != nil {
 		return err
@@ -36,11 +38,11 @@ func (t Connext) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Connext) GetConfig() interface{} {
+func (t *Connext) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Connext) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation
@@ -56,8 +58,7 @@ func (t Connext) Apply(config *SharedConfig, services map[string]Service) error 
 
 	// connext apply
 	t.Environment["NETWORK"] = network
-	t.Environment["VECTOR_CONFIG"] = `\
-{
+	t.Environment["VECTOR_CONFIG"] = `{
 	"adminToken": "ddrWR8TK8UMTyR",
 	"chainAddresses": {
 		"1337": {
@@ -75,8 +76,7 @@ func (t Connext) Apply(config *SharedConfig, services map[string]Service) error 
 	"messagingUrl": "https://messaging.connext.network",
 	"production": true,
 	"mnemonic": "crazy angry east hood fiber awake leg knife entire excite output scheme"
-}
-`
+}`
 	t.Environment["VECTOR_SQLITE_FILE"] = "/database/store.db"
 	t.Environment["VECTOR_PROD"] = "true"
 

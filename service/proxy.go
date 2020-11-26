@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -21,11 +22,12 @@ func newProxy(name string) Proxy {
 	}
 }
 
-func (t Proxy) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Proxy) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/proxy",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/proxy",
 	}, cmd)
 	if err != nil {
 		return err
@@ -36,11 +38,11 @@ func (t Proxy) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Proxy) GetConfig() interface{} {
+func (t *Proxy) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Proxy) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

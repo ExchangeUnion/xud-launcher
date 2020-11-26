@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"path"
+	"strings"
 )
 
 var (
@@ -62,12 +63,9 @@ var genCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		homeDir = path.Join(homeDir, ".xud-docker")
-		generalConf := path.Join(homeDir, "xud-docker.conf")
-		networkDir := path.Join(homeDir, network)
-		networkConf := path.Join(networkDir, fmt.Sprintf("%s.conf", network))
-
-		fmt.Println(generalConf)
-		fmt.Println(networkConf)
+		//generalConf := path.Join(homeDir, "xud-docker.conf")
+		//networkDir := path.Join(homeDir, network)
+		//networkConf := path.Join(networkDir, fmt.Sprintf("%s.conf", network))
 
 		config.Network = network
 
@@ -106,21 +104,31 @@ var genCmd = &cobra.Command{
 			if len(service.GetEnvironment()) > 0 {
 				fmt.Printf("    environment:\n")
 				for key, value := range service.GetEnvironment() {
-					fmt.Printf("    - %s=%s\n", key, value)
+					if strings.Contains(value, "\n") {
+						// multiline value
+						fmt.Printf("      - >\n")
+						fmt.Printf("        %s=\n", key)
+						for _, line := range strings.Split(value, "\n") {
+							fmt.Printf("        %s\n", line)
+						}
+					} else {
+						fmt.Printf("      - %s=%s\n", key, value)
+					}
+
 				}
 			}
 
 			if len(service.GetVolumes()) > 0 {
 				fmt.Printf("    volumes:\n")
 				for _, volume := range service.GetVolumes() {
-					fmt.Printf("    - %s\n", volume)
+					fmt.Printf("      - %s\n", volume)
 				}
 			}
 
 			if len(service.GetPorts()) > 0 {
 				fmt.Printf("    ports:\n")
 				for _, port := range service.GetPorts() {
-					fmt.Printf("    - %s\n", port)
+					fmt.Printf("      - %s\n", port)
 				}
 			}
 

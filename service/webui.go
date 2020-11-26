@@ -21,11 +21,12 @@ func newWebui(name string) Webui {
 	}
 }
 
-func (t Webui) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Webui) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/webui",
+		Image:       "exchangeunion/webui",
 	}, cmd)
 	if err != nil {
 		return err
@@ -36,11 +37,11 @@ func (t Webui) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Webui) GetConfig() interface{} {
+func (t *Webui) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Webui) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Webui) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

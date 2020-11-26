@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -27,11 +28,12 @@ func newLitecoind(name string) Litecoind {
 	}
 }
 
-func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
+func (t *Litecoind) ConfigureFlags(cmd *cobra.Command) error {
 	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
-		Dir:         "./data/litecoind",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "exchangeunion/litecoind",
 	}, cmd)
 	if err != nil {
 		return err
@@ -48,11 +50,11 @@ func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
 	return nil
 }
 
-func (t Litecoind) GetConfig() interface{} {
+func (t *Litecoind) GetConfig() interface{} {
 	return t.config
 }
 
-func (t Litecoind) Apply(config *SharedConfig, services map[string]Service) error {
+func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) error {
 	network := config.Network
 
 	// validation

@@ -6,8 +6,6 @@ import (
 )
 
 type BitcoindConfig struct {
-	BaseConfig
-
 	Mode           string
 	Rpchost        string
 	Rpcport        uint16
@@ -25,14 +23,12 @@ type Bitcoind struct {
 
 func newBitcoind(name string) Bitcoind {
 	return Bitcoind{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/bitcoind",
@@ -65,7 +61,7 @@ func (t Bitcoind) Apply(config *SharedConfig, services map[string]Service) error
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.bitcoind", network, services)
+	err := t.Base.Apply("/root/.bitcoind")
 	if err != nil {
 		return err
 	}

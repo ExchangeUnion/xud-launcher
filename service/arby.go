@@ -7,8 +7,6 @@ import (
 )
 
 type ArbyConfig struct {
-	BaseConfig
-
 	LiveCex                          bool
 	TestMode                         bool
 	BaseAsset                        string
@@ -27,22 +25,20 @@ type Arby struct {
 	Base
 
 	config ArbyConfig
-	Name   string
 }
 
 func newArby(name string) Arby {
 	return Arby{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     true,
 		ExposePorts: []string{},
 		Dir:         "./data/arby",
+		Image:       "exchangeunion/arby:latest",
 	}, cmd)
 	if err != nil {
 		return err
@@ -81,7 +77,7 @@ func (t Arby) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.arby", network, services)
+	err := t.Base.Apply("/root/.arby")
 	if err != nil {
 		return err
 	}

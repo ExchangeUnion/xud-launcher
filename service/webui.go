@@ -6,8 +6,6 @@ import (
 )
 
 type WebuiConfig struct {
-	BaseConfig
-
 	// add more webui specified attributes here
 }
 
@@ -19,14 +17,12 @@ type Webui struct {
 
 func newWebui(name string) Webui {
 	return Webui{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Webui) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/webui",
@@ -53,7 +49,7 @@ func (t Webui) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.webui", network, services)
+	err := t.Base.Apply("/root/.webui")
 	if err != nil {
 		return err
 	}

@@ -6,8 +6,6 @@ import (
 )
 
 type ProxyConfig struct {
-	BaseConfig
-
 	// add more proxy specified attributes here
 }
 
@@ -19,14 +17,12 @@ type Proxy struct {
 
 func newProxy(name string) Proxy {
 	return Proxy{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Proxy) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/proxy",
@@ -53,7 +49,7 @@ func (t Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.proxy", network, services)
+	err := t.Base.Apply("/root/.proxy")
 	if err != nil {
 		return err
 	}

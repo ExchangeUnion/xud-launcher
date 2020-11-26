@@ -6,8 +6,6 @@ import (
 )
 
 type ConnextConfig struct {
-	BaseConfig
-
 	// add more connext specified attributes here
 }
 
@@ -19,14 +17,12 @@ type Connext struct {
 
 func newConnext(name string) Connext {
 	return Connext{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Connext) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/connext",
@@ -53,7 +49,7 @@ func (t Connext) Apply(config *SharedConfig, services map[string]Service) error 
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/app/connext-store", network, services)
+	err := t.Base.Apply("/app/connext-store")
 	if err != nil {
 		return err
 	}

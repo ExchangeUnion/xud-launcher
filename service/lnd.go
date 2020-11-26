@@ -8,8 +8,6 @@ import (
 )
 
 type LndConfig struct {
-	BaseConfig
-
 	Mode           string
 	PreserveConfig bool
 }
@@ -23,15 +21,13 @@ type Lnd struct {
 
 func newLnd(name string, chain string) Lnd {
 	return Lnd{
-		Base: Base{
-			Name: name,
-		},
+		Base:  newBase(name),
 		Chain: chain,
 	}
 }
 
 func (t Lnd) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
@@ -69,7 +65,7 @@ func (t Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.litecoind", network, services)
+	err := t.Base.Apply("/root/.litecoind")
 	if err != nil {
 		return err
 	}

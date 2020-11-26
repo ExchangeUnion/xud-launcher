@@ -10,30 +10,21 @@ import (
 )
 
 var (
-	branch string
-	disableUpdate bool
-	simnetDir string
-	testnetDir string
-	mainnetDir string
-	externalIp string
-	dev bool
-	useLocalImages string
-	api bool
+	config   service.SharedConfig
+	services map[string]service.Service
+	names    []string
 )
 
 func init() {
-	genCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "master", "Git branch name")
-	genCmd.PersistentFlags().BoolVar(&disableUpdate, "disable-update", false, "Skip update checks and enter xud-ctl shell directly")
-	genCmd.PersistentFlags().StringVar(&simnetDir, "simnet-dir", "", "Simnet environment folder")
-	genCmd.PersistentFlags().StringVar(&testnetDir, "testnet-dir", "", "Testnet environment folder")
-	genCmd.PersistentFlags().StringVar(&mainnetDir, "mainnet-dir", "", "Mainnet environment folder")
-	genCmd.PersistentFlags().StringVar(&externalIp, "external-ip", "", "Host machine external IP address")
-	genCmd.PersistentFlags().BoolVar(&dev, "dev", false, "Use local built utils image")
-	genCmd.PersistentFlags().StringVar(&useLocalImages, "use-local-images", "", "Use other local built images")
-	genCmd.PersistentFlags().BoolVar(&api, "api", false, "Expose xud-docker API (REST + WebSocket)")
+	genCmd.PersistentFlags().StringVar(&config.SimnetDir, "simnet-dir", "", "Simnet environment folder")
+	genCmd.PersistentFlags().StringVar(&config.TestnetDir, "testnet-dir", "", "Testnet environment folder")
+	genCmd.PersistentFlags().StringVar(&config.MainnetDir, "mainnet-dir", "", "Mainnet environment folder")
+	genCmd.PersistentFlags().StringVar(&config.ExternalIp, "external-ip", "", "Host machine external IP address")
+	genCmd.PersistentFlags().BoolVar(&config.Dev, "dev", false, "Use local built utils image")
+	genCmd.PersistentFlags().StringVar(&config.UseLocalImages, "use-local-images", "", "Use other local built images")
 
 	// [Add capability to restrict flag values to a set of allowed values](https://github.com/spf13/pflag/issues/236)
-	services := []string{
+	names = []string{
 		"bitcoind",
 		"litecoind",
 		"geth",
@@ -47,20 +38,17 @@ func init() {
 		"proxy",
 	}
 
-	for _, name := range services {
+	services = make(map[string]service.Service)
+
+	for _, name := range names {
 		s := service.NewService(name)
 		err := s.ConfigureFlags(genCmd)
 		if err != nil {
 			log.Fatal(err)
 		}
+		services[name] = s
 	}
 
-	genCmd.PersistentFlags().Bool("webui.disabled", true, "Enable/Disable webui service")
-	genCmd.PersistentFlags().String("webui.expose-ports", "", "Expose webui service ports to your host machine")
-
-	genCmd.PersistentFlags().Bool("proxy.disabled", true, "Enable/Disable proxy service")
-	genCmd.PersistentFlags().String("proxy.expose-ports", "", "Expose proxy service ports to your host machine")
-	
 	rootCmd.AddCommand(genCmd)
 }
 
@@ -80,5 +68,62 @@ var genCmd = &cobra.Command{
 
 		fmt.Println(generalConf)
 		fmt.Println(networkConf)
+
+		config.Network = network
+
+		println("version: 2.4")
+		println("services:")
+
+		for _, name := range names {
+			service := services[name]
+
+			if network == "simnet" {
+				if name == "bitcoind" || name == "litecoind" || name == "geth" || name == "boltz" {
+					continue
+				}
+			}
+
+			if service.Disabled() {
+				continue
+			}
+
+			err = service.Apply(&config, services)
+			if err != nil {
+				log.Fatalf("%s: %s", name, err)
+			}
+
+			fmt.Printf("  %s:\n", name)
+
+			fmt.Printf("    image: %s\n", service.GetImage())
+
+			if len(service.GetCommand()) > 0 {
+				fmt.Printf("    command: >\n")
+				for _, arg := range service.GetCommand() {
+					fmt.Printf("      %s\n", arg)
+				}
+			}
+
+			if len(service.GetEnvironment()) > 0 {
+				fmt.Printf("    environment:\n")
+				for key, value := range service.GetEnvironment() {
+					fmt.Printf("    - %s=%s\n", key, value)
+				}
+			}
+
+			if len(service.GetVolumes()) > 0 {
+				fmt.Printf("    volumes:\n")
+				for _, volume := range service.GetVolumes() {
+					fmt.Printf("    - %s\n", volume)
+				}
+			}
+
+			if len(service.GetPorts()) > 0 {
+				fmt.Printf("    ports:\n")
+				for _, port := range service.GetPorts() {
+					fmt.Printf("    - %s\n", port)
+				}
+			}
+
+		}
 	},
 }

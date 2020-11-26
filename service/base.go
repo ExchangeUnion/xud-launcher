@@ -9,56 +9,84 @@ type BaseConfig struct {
 	Disable     bool
 	ExposePorts []string
 	Dir         string
-}
-
-func configureBaseFlags(service string, config *BaseConfig, defaultValues *BaseConfig, cmd *cobra.Command) error {
-	cmd.PersistentFlags().BoolVar(
-		&config.Disable,
-		fmt.Sprintf("%s.disabled", service),
-		defaultValues.Disable,
-		fmt.Sprintf("Enable/Disable %s service", service),
-	)
-	cmd.PersistentFlags().StringSliceVar(
-		&config.ExposePorts,
-		fmt.Sprintf("%s.expose-ports", service),
-		defaultValues.ExposePorts,
-		fmt.Sprintf("Expose %s service ports to your host machine", service),
-	)
-	cmd.PersistentFlags().StringVar(
-		&config.Dir,
-		fmt.Sprintf("%s.dir", service),
-		defaultValues.Dir,
-		fmt.Sprintf("Specify the main data directory of %s service", service),
-	)
-
-	return nil
+	Image       string
 }
 
 type SharedConfig struct {
-	Network string
-	SimnetDir string
-	TestnetDir string
-	MainnetDir string
-	ExternalIp string
-	Dev bool
+	Network        string
+	SimnetDir      string
+	TestnetDir     string
+	MainnetDir     string
+	ExternalIp     string
+	Dev            bool
 	UseLocalImages string
 }
 
 type Base struct {
-	Name string
+	Name        string
 	Image       string
 	Environment map[string]string
 	Command     []string
 	Ports       []string
 	Volumes     []string
+
+	config BaseConfig
 }
 
-func (t Base) Apply(config *BaseConfig, dir string, network string, services map[string] Service) error {
-	for _, port := range config.ExposePorts {
+func newBase(name string) Base {
+	return Base{
+		Name:        name,
+		Image:       "",
+		Environment: make(map[string]string),
+		Command:     []string{},
+		Ports:       []string{},
+		Volumes:     []string{},
+	}
+}
+
+func (t Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) error {
+	cmd.PersistentFlags().BoolVar(
+		&t.config.Disable,
+		fmt.Sprintf("%s.disabled", t.Name),
+		defaultValues.Disable,
+		fmt.Sprintf("Enable/Disable %s service", t.Name),
+	)
+	t.config.Disable = defaultValues.Disable
+
+	cmd.PersistentFlags().StringSliceVar(
+		&t.config.ExposePorts,
+		fmt.Sprintf("%s.expose-ports", t.Name),
+		defaultValues.ExposePorts,
+		fmt.Sprintf("Expose %s service ports to your host machine", t.Name),
+	)
+	t.config.ExposePorts = defaultValues.ExposePorts
+
+	cmd.PersistentFlags().StringVar(
+		&t.config.Dir,
+		fmt.Sprintf("%s.dir", t.Name),
+		defaultValues.Dir,
+		fmt.Sprintf("Specify the main data directory of %s service", t.Name),
+	)
+	t.config.Dir = defaultValues.Dir
+
+	cmd.PersistentFlags().StringVar(
+		&t.config.Image,
+		fmt.Sprintf("%s.image", t.Name),
+		defaultValues.Image,
+		fmt.Sprintf("Specify the image of %s service", t.Name),
+	)
+	t.config.Image = defaultValues.Image
+
+	return nil
+}
+
+func (t Base) Apply(dir string) error {
+	for _, port := range t.config.ExposePorts {
 		t.Ports = append(t.Ports, port)
 	}
 
-	t.Volumes = append(t.Volumes, fmt.Sprintf("%s:%s", config.Dir, dir))
+	t.Volumes = append(t.Volumes, fmt.Sprintf("%s:%s", t.config.Dir, dir))
+	t.Image = t.config.Image
 
 	return nil
 }
@@ -67,35 +95,67 @@ func (t Base) GetName() string {
 	return t.Name
 }
 
+func (t Base) GetImage() string {
+	return t.Image
+}
+
+func (t Base) GetCommand() []string {
+	return t.Command
+}
+
+func (t Base) GetEnvironment() map[string]string {
+	return t.Environment
+}
+
+func (t Base) GetVolumes() []string {
+	return t.Volumes
+}
+
+func (t Base) GetPorts() []string {
+	return t.Ports
+}
+
+func (t Base) Disabled() bool {
+	return t.config.Disable
+}
+
 type Service interface {
 	ConfigureFlags(cmd *cobra.Command) error
 	GetConfig() interface{}
 	GetName() string
 	Apply(config *SharedConfig, services map[string]Service) error
+
+	GetImage() string
+	GetCommand() []string
+	GetEnvironment() map[string]string
+	GetVolumes() []string
+	GetPorts() []string
+	Disabled() bool
 }
 
 func NewService(name string) Service {
-	if name == "bitcoind" {
+	switch name {
+	case "bitcoind":
 		return newBitcoind("bitcoind")
-	} else if name == "litecoind" {
+	case "litecoind":
 		return newLitecoind("litecoind")
-	} else if name == "geth" {
+	case "geth":
 		return newGeth("geth")
-	} else if name == "lndbtc" {
+	case "lndbtc":
 		return newLnd("lndbtc", "bitcoin")
-	} else if name == "lndltc" {
-		return newLnd("lndltc","litecoin")
-	} else if name == "connext" {
+	case "lndltc":
+		return newLnd("lndltc", "litecoin")
+	case "connext":
 		return newConnext("connext")
-	} else if name == "xud" {
+	case "xud":
 		return newXud("xud")
-	} else if name == "arby" {
+	case "arby":
 		return newArby("arby")
-	} else if name == "boltz" {
+	case "boltz":
 		return newBoltz("boltz")
-	} else if name == "webui" {
+	case "webui":
 		return newWebui("webui")
-	} else if name == "proxy" {
+	case "proxy":
 		return newProxy("proxy")
 	}
 

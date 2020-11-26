@@ -6,8 +6,6 @@ import (
 )
 
 type BoltzConfig struct {
-	BaseConfig
-
 	// add more boltz specified attributes here
 }
 
@@ -19,14 +17,12 @@ type Boltz struct {
 
 func newBoltz(name string) Boltz {
 	return Boltz{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Boltz) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/boltz",
@@ -53,7 +49,7 @@ func (t Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.boltz", network, services)
+	err := t.Base.Apply("/root/.boltz")
 	if err != nil {
 		return err
 	}

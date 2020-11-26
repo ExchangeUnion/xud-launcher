@@ -6,8 +6,6 @@ import (
 )
 
 type XudConfig struct {
-	BaseConfig
-
 	PreserveConfig bool
 }
 
@@ -19,14 +17,12 @@ type Xud struct {
 
 func newXud(name string) Xud {
 	return Xud{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Xud) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/xud",
@@ -53,7 +49,7 @@ func (t Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.xud", network, services)
+	err := t.Base.Apply("/root/.xud")
 	if err != nil {
 		return err
 	}

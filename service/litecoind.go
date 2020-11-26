@@ -6,8 +6,6 @@ import (
 )
 
 type LitecoindConfig struct {
-	BaseConfig
-
 	Mode           string
 	Rpchost        string
 	Rpcport        uint16
@@ -25,14 +23,12 @@ type Litecoind struct {
 
 func newLitecoind(name string) Litecoind {
 	return Litecoind{
-		Base: Base{
-			Name: name,
-		},
+		Base: newBase(name),
 	}
 }
 
 func (t Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureBaseFlags(t.Name, &t.config.BaseConfig, &BaseConfig{
+	err := t.Base.ConfigureFlags(&BaseConfig{
 		Disable:     false,
 		ExposePorts: []string{},
 		Dir:         "./data/litecoind",
@@ -65,7 +61,7 @@ func (t Litecoind) Apply(config *SharedConfig, services map[string]Service) erro
 	}
 
 	// base apply
-	err := t.Base.Apply(&t.config.BaseConfig, "/root/.litecoind", network, services)
+	err := t.Base.Apply("/root/.litecoind")
 	if err != nil {
 		return err
 	}

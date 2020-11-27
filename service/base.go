@@ -211,7 +211,6 @@ func ReflectFlags(name string, config interface{}, cmd *cobra.Command) error {
 		case reflect.String:
 			cmd.PersistentFlags().StringVar(p.(*string), key, "", usage)
 		case reflect.Bool:
-			fmt.Printf("%s p=%p\n", name, p)
 			cmd.PersistentFlags().BoolVar(p.(*bool), key, false, usage)
 		case reflect.Uint16:
 			cmd.PersistentFlags().Uint16Var(p.(*uint16), key, 0, usage)

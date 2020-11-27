@@ -27,7 +27,7 @@ var (
 		"mainnet": {
 			"bitcoind":  "exchangeunion/bitcoind:0.20.1",
 			"litecoind": "exchangeunion/litecoind:0.18.1",
-			"geth":      "exchangeunion/geth:1.9.22",
+			"geth":      "exchangeunion/geth:1.9.24",
 			"lndbtc":    "exchangeunion/lndbtc:0.11.1-beta",
 			"lndltc":    "exchangeunion/lndltc:0.11.0-beta.rc1",
 			"connext":   "exchangeunion/connext:1.3.6",

@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +22,7 @@ func newWebui(name string) Webui {
 }
 
 func (t *Webui) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
-		Disabled:    true,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "",
-	}); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
 		return err
 	}
 
@@ -42,6 +36,8 @@ func (t *Webui) GetConfig() interface{} {
 }
 
 func (t *Webui) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.config)
+
 	network := config.Network
 
 	// validation

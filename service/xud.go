@@ -2,18 +2,19 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
 type XudConfig struct {
-	PreserveConfig bool `usage:"Preserve xud xud.conf file during updates"`
+	PreserveConfig string `usage:"Preserve xud xud.conf file during updates"`
 }
 
 type Xud struct {
 	Base
 
 	config XudConfig
+
+	PreserveConfig bool
 }
 
 func newXud(name string) Xud {
@@ -23,17 +24,12 @@ func newXud(name string) Xud {
 }
 
 func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
-		Disabled:    false,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "",
-	}); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, false); err != nil {
 		return err
 	}
 
 	if err := ReflectFlags(t.Name, &t.config, &XudConfig{
-		PreserveConfig: false,
+		PreserveConfig: "",
 	}, cmd); err != nil {
 		return err
 	}
@@ -46,6 +42,8 @@ func (t *Xud) GetConfig() interface{} {
 }
 
 func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.config)
+
 	network := config.Network
 
 	// validation
@@ -63,7 +61,7 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["NETWORK"] = network
 	t.Environment["NODE_ENV"] = "production"
 
-	if t.config.PreserveConfig {
+	if t.config.PreserveConfig == "true" {
 		t.Environment["PRESERVE_CONFIG"] = "true"
 	} else {
 		t.Environment["PRESERVE_CONFIG"] = "false"

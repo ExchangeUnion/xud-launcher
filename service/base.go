@@ -56,14 +56,22 @@ func newBase(name string) Base {
 	}
 }
 
-func (t *Base) ConfigureFlags(cmd *cobra.Command, defaultValues *BaseConfig) error {
-	if err := ReflectFlags(t.Name, &t.config, defaultValues, cmd); err != nil {
+func (t *Base) ConfigureFlags(cmd *cobra.Command, disabled bool) error {
+	if err := ReflectFlags(t.Name, &t.config, &BaseConfig{
+		Disabled:    disabled,
+		ExposePorts: []string{},
+		Dir:         "",
+		Image:       "",
+	}, cmd); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (t *Base) Apply(dir string, network string) error {
+
+	ReflectFillConfig(t.Name, &t.config)
+
 	for _, port := range t.config.ExposePorts {
 		t.Ports = append(t.Ports, port)
 	}
@@ -107,7 +115,7 @@ func (t *Base) GetPorts() []string {
 	return t.Ports
 }
 
-func (t *Base) Disabled() bool {
+func (t *Base) IsDisabled() bool {
 	return t.config.Disabled
 }
 
@@ -122,7 +130,7 @@ type Service interface {
 	GetEnvironment() map[string]string
 	GetVolumes() []string
 	GetPorts() []string
-	Disabled() bool
+	IsDisabled() bool
 }
 
 func NewService(name string) Service {
@@ -183,20 +191,24 @@ func ReflectFlags(name string, config interface{}, defaultValues interface{}, cm
 
 		key := fmt.Sprintf("%s.%s", name, strcase.ToKebab(fn))
 
-		p := v.FieldByName(fn).Addr().Interface()
+		//p := v.FieldByName(fn).Addr().Interface()
 
 		value := getDefaultValue(dv, fn)
 
 		switch ft.Kind() {
 		case reflect.String:
-			cmd.PersistentFlags().StringVar(p.(*string), key, value.(string), usage)
+			//cmd.PersistentFlags().StringVar(p.(*string), key, value.(string), usage)
+			cmd.PersistentFlags().String(key, value.(string), usage)
 		case reflect.Bool:
-			cmd.PersistentFlags().BoolVar(p.(*bool), key, value.(bool), usage)
+			//cmd.PersistentFlags().BoolVar(p.(*bool), key, value.(bool), usage)
+			cmd.PersistentFlags().Bool(key, value.(bool), usage)
 		case reflect.Uint16:
-			cmd.PersistentFlags().Uint16Var(p.(*uint16), key, value.(uint16), usage)
+			//cmd.PersistentFlags().Uint16Var(p.(*uint16), key, value.(uint16), usage)
+			cmd.PersistentFlags().Uint16(key, value.(uint16), usage)
 		case reflect.Slice:
 			// FIXME differentiate slice item type
-			cmd.PersistentFlags().StringSliceVar(p.(*[]string), key, value.([]string), usage)
+			//cmd.PersistentFlags().StringSliceVar(p.(*[]string), key, value.([]string), usage)
+			cmd.PersistentFlags().StringSlice(key, value.([]string), usage)
 		default:
 			return errors.New("unsupported config struct field type: " + ft.Kind().String())
 		}
@@ -205,4 +217,40 @@ func ReflectFlags(name string, config interface{}, defaultValues interface{}, cm
 		}
 	}
 	return nil
+}
+
+func ReflectFillConfig(name string, config interface{}) {
+	v := reflect.ValueOf(config).Elem()
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		fn := field.Name
+		ft := field.Type
+		key := fmt.Sprintf("%s.%s", name, strcase.ToKebab(fn))
+		//flag := cmd.PersistentFlags().Lookup(key)
+		p := v.FieldByName(fn).Addr().Interface()
+
+		switch ft.Kind() {
+		case reflect.String:
+			//if ! flag.Changed {
+			//	*p.(*string) = viper.GetString(key)
+			//}
+			*p.(*string) = viper.GetString(key)
+		case reflect.Bool:
+			//if ! flag.Changed {
+			//	*p.(*bool) = viper.GetBool(key)
+			//}
+			*p.(*bool) = viper.GetBool(key)
+		case reflect.Uint16:
+			//if ! flag.Changed {
+			//	*p.(*uint16) = uint16(viper.GetUint(key))
+			//}
+			*p.(*uint16) = uint16(viper.GetUint(key))
+		case reflect.Slice:
+			//if ! flag.Changed {
+			//	*p.(*[]string) = viper.GetStringSlice(key)
+			//}
+			*p.(*[]string) = viper.GetStringSlice(key)
+		}
+	}
 }

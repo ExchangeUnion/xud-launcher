@@ -7,8 +7,8 @@ import (
 )
 
 type ArbyConfig struct {
-	LiveCex                          bool   `usage:"Live CEX (deprecated)"`
-	TestMode                         bool   `usage:"Whether to issue real orders on the centralized exchange"`
+	LiveCex                          string `usage:"Live CEX (deprecated)"`
+	TestMode                         string `usage:"Whether to issue real orders on the centralized exchange"`
 	BaseAsset                        string `usage:"Base asset"`
 	QuoteAsset                       string `usage:"Quote asset"`
 	CexBaseAsset                     string `usage:"Centralized exchange base asset"`
@@ -25,6 +25,7 @@ type Arby struct {
 	Base
 
 	config ArbyConfig
+	cmd    *cobra.Command
 }
 
 func newArby(name string) Arby {
@@ -34,17 +35,14 @@ func newArby(name string) Arby {
 }
 
 func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
-		Disabled:    true,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "",
-	}); err != nil {
+	t.cmd = cmd
+
+	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
 		return err
 	}
 
 	if err := ReflectFlags(t.Name, &t.config, &ArbyConfig{
-		TestMode:                         true,
+		TestMode:                         "",
 		BaseAsset:                        "",
 		QuoteAsset:                       "",
 		CexBaseAsset:                     "",
@@ -71,6 +69,8 @@ func (t *Arby) GetConfig() interface{} {
 }
 
 func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.config)
+
 	network := config.Network
 
 	// validation

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -15,12 +16,9 @@ var (
 	logger     = logrus.New()
 	network    string
 	homeDir    string
-	simnetDir  string
-	testnetDir string
-	mainnetDir string
 	networkDir string
-	dataDir string
-	logsDir string
+	dataDir    string
+	logsDir    string
 
 	rootCmd = &cobra.Command{
 		Use:   "xud-launcher",
@@ -52,7 +50,7 @@ func Execute() error {
 
 func ensureDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.Mkdir(path, os.ModeDir | 0700); err != nil {
+		if err := os.Mkdir(path, os.ModeDir|0700); err != nil {
 			panic(err)
 		}
 		logger.Debugf("Created folder: " + path)
@@ -67,10 +65,12 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
+	logger.Info("Configuring global flags")
+
 	rootCmd.PersistentFlags().StringVarP(&network, "network", "n", "simnet", "specify XUD network")
-	rootCmd.PersistentFlags().StringVar(&simnetDir, "simnet-dir", "", "Simnet environment folder")
-	rootCmd.PersistentFlags().StringVar(&testnetDir, "testnet-dir", "", "Testnet environment folder")
-	rootCmd.PersistentFlags().StringVar(&mainnetDir, "mainnet-dir", "", "Mainnet environment folder")
+	rootCmd.PersistentFlags().String("simnet-dir", filepath.Join(homeDir, "simnet"), "Simnet environment folder")
+	rootCmd.PersistentFlags().String("testnet-dir", filepath.Join(homeDir, "testnet"), "Testnet environment folder")
+	rootCmd.PersistentFlags().String("mainnet-dir", filepath.Join(homeDir, "mainnet"), "Mainnet environment folder")
 
 	if err := viper.BindPFlag("simnet-dir", rootCmd.PersistentFlags().Lookup("simnet-dir")); err != nil {
 		logger.Fatal(err)
@@ -98,29 +98,11 @@ func initConfig() {
 
 	switch network {
 	case "simnet":
-		networkDir = filepath.Join(homeDir, "simnet")
-		if viper.GetString("simnet-dir") != "" {
-			networkDir = viper.GetString("simnet-dir")
-		}
-		if simnetDir != "" {
-			networkDir = simnetDir
-		}
+		networkDir = viper.GetString("simnet-dir")
 	case "testnet":
-		networkDir = filepath.Join(homeDir, "testnet")
-		if viper.GetString("testnet-dir") != "" {
-			networkDir = viper.GetString("testnet-dir")
-		}
-		if testnetDir != "" {
-			networkDir = testnetDir
-		}
+		networkDir = viper.GetString("testnet-dir")
 	case "mainnet":
-		networkDir = filepath.Join(homeDir, "mainnet")
-		if viper.GetString("mainnet-dir") != "" {
-			networkDir = viper.GetString("mainnet-dir")
-		}
-		if mainnetDir != "" {
-			networkDir = mainnetDir
-		}
+		networkDir = viper.GetString("mainnet-dir")
 	default:
 		panic(errors.New("invalid network: " + network))
 	}
@@ -136,4 +118,14 @@ func initConfig() {
 	logger.Debugf("networkDir=%s", networkDir)
 	logger.Debugf("dataDir=%s", dataDir)
 	logger.Debugf("logsDir=%s", logsDir)
+
+	networkConf := filepath.Join(networkDir, fmt.Sprintf("%s.conf", network))
+	viper.SetConfigFile(networkConf)
+	viper.SetConfigType("toml")
+
+	logger.Infof("Loading network config file: %s", networkConf)
+	err = viper.MergeInConfig()
+	if err != nil {
+		logger.Info(err)
+	}
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +22,7 @@ func newConnext(name string) Connext {
 }
 
 func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
-		Disabled:    false,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "",
-	}); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, false); err != nil {
 		return err
 	}
 
@@ -42,6 +36,8 @@ func (t *Connext) GetConfig() interface{} {
 }
 
 func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.config)
+
 	network := config.Network
 
 	// validation

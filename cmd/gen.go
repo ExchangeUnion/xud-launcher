@@ -37,6 +37,8 @@ func init() {
 
 	services = make(map[string]service.Service)
 
+	logger.Info("Configuring subcommand flags")
+
 	for _, name := range names {
 		s := service.NewService(name)
 		err := s.ConfigureFlags(genCmd)
@@ -126,7 +128,7 @@ var genCmd = &cobra.Command{
 		// filter enabled services
 		for _, name := range names {
 			s := services[name]
-			if s.Disabled() {
+			if s.IsDisabled() {
 				continue
 			}
 			enabledServices = append(enabledServices, s)

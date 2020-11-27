@@ -9,7 +9,7 @@ import (
 // TODO support variable replacement in usage tag
 type LndConfig struct {
 	Mode           string `usage:"Lnd service mode"`
-	PreserveConfig bool   `usage:"Preserve lnd.conf file during updates"`
+	PreserveConfig string `usage:"Preserve lnd.conf file during updates"`
 }
 
 type Lnd struct {
@@ -27,18 +27,13 @@ func newLnd(name string, chain string) Lnd {
 }
 
 func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
-		Disabled:    false,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "",
-	}); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, false); err != nil {
 		return err
 	}
 
 	if err := ReflectFlags(t.Name, &t.config, &LndConfig{
 		Mode:           "native",
-		PreserveConfig: false,
+		PreserveConfig: "false",
 	}, cmd); err != nil {
 		return err
 	}
@@ -51,6 +46,8 @@ func (t *Lnd) GetConfig() interface{} {
 }
 
 func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.config)
+
 	network := config.Network
 
 	// validation
@@ -68,7 +65,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["NETWORK"] = network
 	t.Environment["CHAIN"] = t.Chain
 
-	if t.config.PreserveConfig {
+	if t.config.PreserveConfig == "true" {
 		t.Environment["PRESERVE_CONFIG"] = "true"
 	} else {
 		t.Environment["PRESERVE_CONFIG"] = "false"

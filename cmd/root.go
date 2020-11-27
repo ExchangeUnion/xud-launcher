@@ -22,8 +22,6 @@ var (
 	dataDir string
 	logsDir string
 
-
-
 	rootCmd = &cobra.Command{
 		Use:   "xud-launcher",
 		Short: "XUD environment launcher",
@@ -54,7 +52,7 @@ func Execute() error {
 
 func ensureDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.Mkdir(path, os.ModeDir); err != nil {
+		if err := os.Mkdir(path, os.ModeDir | 0700); err != nil {
 			panic(err)
 		}
 		logger.Debugf("Created folder: " + path)

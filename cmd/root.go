@@ -71,7 +71,7 @@ func initConfig() {
 	logger.Infof("Loading general config file: %s", generalConf)
 	err := viper.ReadInConfig()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Info(err)
 	}
 
 	switch network {

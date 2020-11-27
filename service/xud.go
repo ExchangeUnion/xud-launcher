@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -22,21 +23,20 @@ func newXud(name string) Xud {
 }
 
 func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    false,
 		ExposePorts: []string{},
-		Dir:         "./data/xud",
-		Image:       "exchangeunion/xud",
-	}, cmd)
-	if err != nil {
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &XudConfig{
+		PreserveConfig: false,
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().BoolVar(&t.config.PreserveConfig, "xud.preserve-config", false, "Preserve xud xud.conf file during updates")
 
 	return nil
 }
@@ -54,7 +54,7 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.xud", network)
+	err := t.Base.Apply("/root/.xud", config.Network)
 	if err != nil {
 		return err
 	}

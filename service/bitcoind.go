@@ -29,27 +29,26 @@ func newBitcoind(name string) Bitcoind {
 }
 
 func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    true,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/bitcoind",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &BitcoindConfig{
+		Mode:           "light",
+		Rpchost:        "",
+		Rpcport:        0,
+		Rpcuser:        "",
+		Rpcpass:        "",
+		Zmqpubrawblock: "",
+		Zmqpubrawtx:    "",
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().StringVar(&t.config.Mode, "bitcoind.mode", "light", "Bitcoind service mode")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpchost, "bitcoind.rpchost", "", "External bitcoind RPC hostname")
-	//cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "bitcoind.rpcport", 0, "External bitcoind RPC port")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpcuser, "bitcoind.rpcuser", "", "External bitcoind RPC username")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpcpass, "bitcoind.rpcpass", "", "External bitcoind RPC password")
-	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawblock, "bitcoind.zmqpubrawblock", "", "External bitcoind ZeroMQ raw blocks publication address")
-	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawtx, "bitcoind.zmqpubrawtx", "", "External bitcoind ZeroMQ raw transactions publication address")
 
 	return nil
 }
@@ -67,7 +66,8 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.bitcoind", network)
+
+	err := t.Base.Apply("/root/.bitcoind", config.Network)
 	if err != nil {
 		return err
 	}

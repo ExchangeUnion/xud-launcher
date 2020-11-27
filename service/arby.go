@@ -34,38 +34,30 @@ func newArby(name string) Arby {
 }
 
 func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    true,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/arby",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	//var key string
-	//key = "arby.live-cex"
-	//cmd.PersistentFlags().BoolVar(&t.config.LiveCex, key, true, "Live CEX (deprecated)")
-	//if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
-	//	return err
-	//}
-
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &ArbyConfig{
+		TestMode:                         true,
+		BaseAsset:                        "",
+		QuoteAsset:                       "",
+		CexBaseAsset:                     "",
+		CexQuoteAsset:                    "",
+		TestCentralizedBaseassetBalance:  "",
+		TestCentralizedQuoteassetBalance: "",
+		Cex:                              "binance",
+		CexApiKey:                        "123",
+		CexApiSecret:                     "abc",
+		Margin:                           "0.04",
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().BoolVar(&t.config.TestMode, "arby.test-mode", true, "Whether to issue real orders on the centralized exchange")
-	//cmd.PersistentFlags().StringVar(&t.config.BaseAsset, "arby.base-asset", "", "Base asset")
-	//cmd.PersistentFlags().StringVar(&t.config.QuoteAsset, "arby.quote-asset", "", "Quote asset")
-	//cmd.PersistentFlags().StringVar(&t.config.CexBaseAsset, "arby.cex-base-asset", "", "Centralized exchange base asset")
-	//cmd.PersistentFlags().StringVar(&t.config.CexQuoteAsset, "arby.cex-quote-asset", "", "Centralized exchange quote asset")
-	//cmd.PersistentFlags().StringVar(&t.config.TestCentralizedBaseassetBalance, "arby.test-centralized-baseasset-balance", "", "Test centralized base asset balance")
-	//cmd.PersistentFlags().StringVar(&t.config.TestCentralizedQuoteassetBalance, "arby.test-centralized-quoteasset-balance", "", "Test centralized quote asset balance")
-	//cmd.PersistentFlags().StringVar(&t.config.Cex, "arby.cex", "binance", "Centralized Exchange")
-	//cmd.PersistentFlags().StringVar(&t.config.CexApiKey, "arby.cex-api-key", "123", "CEX API key")
-	//cmd.PersistentFlags().StringVar(&t.config.CexApiSecret, "arby.cex-api-secret", "abc", "CEX API secret")
-	//cmd.PersistentFlags().StringVar(&t.config.Margin, "arby.margin", "0.04", "Trade margin")
 
 	if err := cmd.PersistentFlags().MarkDeprecated("arby.live-cex", "Please use --arby.test-mode instead"); err != nil {
 		return err
@@ -87,7 +79,7 @@ func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.arby", network)
+	err := t.Base.Apply("/root/.arby", config.Network)
 	if err != nil {
 		return err
 	}

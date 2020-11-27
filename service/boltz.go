@@ -23,13 +23,12 @@ func newBoltz(name string) Boltz {
 }
 
 func (t *Boltz) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    true,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/boltz",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
@@ -51,7 +50,7 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.boltz", network)
+	err := t.Base.Apply("/root/.boltz", config.Network)
 	if err != nil {
 		return err
 	}

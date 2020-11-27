@@ -23,13 +23,12 @@ func newProxy(name string) Proxy {
 }
 
 func (t *Proxy) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    false,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/proxy",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
@@ -51,7 +50,7 @@ func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.proxy", network)
+	err := t.Base.Apply("/root/.proxy", config.Network)
 	if err != nil {
 		return err
 	}

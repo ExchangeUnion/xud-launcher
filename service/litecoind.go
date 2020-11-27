@@ -29,27 +29,26 @@ func newLitecoind(name string) Litecoind {
 }
 
 func (t *Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    true,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/litecoind",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &LitecoindConfig{
+		Mode:           "light",
+		Rpchost:        "",
+		Rpcport:        0,
+		Rpcuser:        "",
+		Rpcpass:        "",
+		Zmqpubrawblock: "",
+		Zmqpubrawtx:    "",
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().StringVar(&t.config.Mode, "litecoind.mode", "light", "Litecoind service mode")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpchost, "litecoind.rpchost", "", "External litecoind RPC hostname")
-	//cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "litecoind.rpcport", 0, "External litecoind RPC port")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpcuser, "litecoind.rpcuser", "", "External litecoind RPC username")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpcpass, "litecoind.rpcpass", "", "External litecoind RPC password")
-	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawblock, "litecoind.zmqpubrawblock", "", "External litecoind ZeroMQ raw blocks publication address")
-	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawtx, "litecoind.zmqpubrawtx", "", "External litecoind ZeroMQ raw transactions publication address")
 
 	return nil
 }
@@ -67,7 +66,7 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.litecoind", network)
+	err := t.Base.Apply("/root/.litecoind", config.Network)
 	if err != nil {
 		return err
 	}

@@ -27,32 +27,21 @@ func newLnd(name string, chain string) Lnd {
 }
 
 func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    false,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       fmt.Sprintf("exchangeunion/%s", t.Name),
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &LndConfig{
+		Mode:           "native",
+		PreserveConfig: false,
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().StringVar(
-	//	&t.config.Mode,
-	//	fmt.Sprintf("%s.mode", t.Name),
-	//	"native",
-	//	fmt.Sprintf("%s service mode", strings.Title(t.Name)),
-	//)
-	//cmd.PersistentFlags().BoolVar(
-	//	&t.config.PreserveConfig,
-	//	fmt.Sprintf("%s.preserve-config", t.Name),
-	//	false,
-	//	fmt.Sprintf("Preserve %s lnd.conf file during updates", t.Name),
-	//)
 
 	return nil
 }
@@ -70,7 +59,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.lnd", network)
+	err := t.Base.Apply("/root/.lnd", config.Network)
 	if err != nil {
 		return err
 	}

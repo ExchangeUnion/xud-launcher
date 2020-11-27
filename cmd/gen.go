@@ -49,22 +49,6 @@ func init() {
 	rootCmd.AddCommand(genCmd)
 }
 
-func bypass(network string, s service.Service) bool {
-	name := s.GetName()
-
-	if network == "simnet" {
-		if name == "bitcoind" || name == "litecoind" || name == "geth" || name == "boltz" {
-			return true
-		}
-	}
-
-	if s.Disabled() {
-		return true
-	}
-
-	return false
-}
-
 func Export(services []service.Service) string {
 	var result = ""
 
@@ -123,26 +107,29 @@ func Export(services []service.Service) string {
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate docker-compose.yml file from xud-docker configurations",
-	Long:  `...`,
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Network = network
 		config.HomeDir = homeDir
 		config.NetworkDir = networkDir
 
-		var validServices []service.Service
-
+		// apply for all services
 		for _, name := range names {
 			s := services[name]
-
-			if bypass(network, s) {
-				logger.Debugf("Bypass %s", s.GetName())
-				continue
-			}
 			err := s.Apply(&config, services)
 			if err != nil {
 				logger.Fatalf("%s: %s", name, err)
 			}
-			validServices = append(validServices, s)
+		}
+
+		var enabledServices []service.Service
+
+		// filter enabled services
+		for _, name := range names {
+			s := services[name]
+			if s.Disabled() {
+				continue
+			}
+			enabledServices = append(enabledServices, s)
 		}
 
 		composeFile := filepath.Join(networkDir, "docker-compose.yml")
@@ -151,7 +138,7 @@ var genCmd = &cobra.Command{
 			logger.Fatal(err)
 		}
 		defer f.Close()
-		yml := Export(validServices)
+		yml := Export(enabledServices)
 		f.WriteString(yml)
 
 		logger.Infof("Exported to %s\n", composeFile)

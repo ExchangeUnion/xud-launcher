@@ -29,27 +29,26 @@ func newGeth(name string) Geth {
 }
 
 func (t *Geth) ConfigureFlags(cmd *cobra.Command) error {
-	err := t.Base.ConfigureFlags(&BaseConfig{
-		Disable:     false,
+	if err := t.Base.ConfigureFlags(cmd, &BaseConfig{
+		Disabled:    true,
 		ExposePorts: []string{},
 		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       "exchangeunion/geth",
-	}, cmd)
-	if err != nil {
+		Image:       "",
+	}); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+	if err := ReflectFlags(t.Name, &t.config, &GethConfig{
+		Mode:                "light",
+		Rpchost:             "",
+		Rpcport:             0,
+		InfuraProjectId:     "",
+		InfuraProjectSecret: "",
+		Cache:               "",
+		AncientChaindataDir: "",
+	}, cmd); err != nil {
 		return err
 	}
-
-	//cmd.PersistentFlags().StringVar(&t.config.Mode, "geth.mode", "light", "Geth service mode")
-	//cmd.PersistentFlags().StringVar(&t.config.Rpchost, "geth.rpchost", "", "External geth RPC hostname")
-	//cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "geth.rpcport", 0, "External geth RPC port")
-	//cmd.PersistentFlags().StringVar(&t.config.InfuraProjectId, "geth.infura-project-id", "", "Infura geth provider project ID")
-	//cmd.PersistentFlags().StringVar(&t.config.InfuraProjectSecret, "geth.infura-project-secret", "", "Infura geth provider project secret")
-	//cmd.PersistentFlags().StringVar(&t.config.Cache, "geth.cache", "", "Geth cache size")
-	//cmd.PersistentFlags().StringVar(&t.config.AncientChaindataDir, "geth.ancient-chaindata-dir", "", "Specify the container's volume mapping ancient chaindata directory. Can be located on a slower HDD.")
 
 	return nil
 }
@@ -67,7 +66,7 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// base apply
-	err := t.Base.Apply("/root/.ethereum", network)
+	err := t.Base.Apply("/root/.ethereum", config.Network)
 	if err != nil {
 		return err
 	}

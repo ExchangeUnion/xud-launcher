@@ -5,7 +5,7 @@ import (
 	"github.com/reliveyy/xud-launcher/service"
 	"github.com/spf13/cobra"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -125,17 +125,15 @@ var genCmd = &cobra.Command{
 	Short: "Generate docker-compose.yml file from xud-docker configurations",
 	Long:  `...`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		//generalConf := path.Join(homeDir, "xud-docker.conf")
-		//networkConf := path.Join(networkDir, fmt.Sprintf("%s.conf", network))
-
 		config.Network = network
 		config.HomeDir = homeDir
 		config.NetworkDir = networkDir
 
 		var validServices []service.Service
 
-		for name, s := range services {
+		for _, name := range names {
+			s := services[name]
+
 			if bypass(network, s) {
 				logger.Debugf("Bypass %s", s.GetName())
 				continue
@@ -147,7 +145,7 @@ var genCmd = &cobra.Command{
 			validServices = append(validServices, s)
 		}
 
-		composeFile := path.Join(networkDir, "docker-compose.yml")
+		composeFile := filepath.Join(networkDir, "docker-compose.yml")
 		f, err := os.Create(composeFile)
 		if err != nil {
 			logger.Fatal(err)

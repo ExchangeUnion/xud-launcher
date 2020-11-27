@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"path"
+	"path/filepath"
 )
 
 var (
@@ -30,7 +30,7 @@ func getHomeDir() string {
 	if err != nil {
 		panic(err)
 	}
-	return path.Join(homeDir, ".xud-docker")
+	return filepath.Join(homeDir, ".xud-docker")
 }
 
 // Execute executes the root command.
@@ -62,7 +62,7 @@ func init() {
 }
 
 func initConfig() {
-	generalConf := path.Join(homeDir, "xud-docker.conf")
+	generalConf := filepath.Join(homeDir, "xud-docker.conf")
 	viper.SetConfigFile(generalConf)
 	viper.SetConfigType("toml")
 
@@ -76,7 +76,7 @@ func initConfig() {
 
 	switch network {
 	case "simnet":
-		networkDir = path.Join(homeDir, "simnet")
+		networkDir = filepath.Join(homeDir, "simnet")
 		if viper.GetString("simnet-dir") != "" {
 			networkDir = viper.GetString("simnet-dir")
 		}
@@ -84,7 +84,7 @@ func initConfig() {
 			networkDir = simnetDir
 		}
 	case "testnet":
-		networkDir = path.Join(homeDir, "testnet")
+		networkDir = filepath.Join(homeDir, "testnet")
 		if viper.GetString("testnet-dir") != "" {
 			networkDir = viper.GetString("testnet-dir")
 		}
@@ -92,7 +92,7 @@ func initConfig() {
 			networkDir = testnetDir
 		}
 	case "mainnet":
-		networkDir = path.Join(homeDir, "mainnet")
+		networkDir = filepath.Join(homeDir, "mainnet")
 		if viper.GetString("mainnet-dir") != "" {
 			networkDir = viper.GetString("mainnet-dir")
 		}

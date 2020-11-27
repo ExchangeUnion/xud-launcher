@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -77,7 +77,7 @@ var cleanupCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal(err)
 		}
-		networkDir := path.Join(home, ".xud-docker", network)
+		networkDir := filepath.Join(home, ".xud-docker", network)
 		fmt.Println(networkDir)
 
 		if _, err := os.Stat(networkDir); !os.IsNotExist(err) {

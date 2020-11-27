@@ -6,7 +6,7 @@ import (
 )
 
 type XudConfig struct {
-	PreserveConfig bool
+	PreserveConfig bool `usage:"Preserve xud xud.conf file during updates"`
 }
 
 type Xud struct {
@@ -32,7 +32,11 @@ func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().BoolVar(&t.config.PreserveConfig, "xud.preserve-config", false, "Preserve xud xud.conf file during updates")
+	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+		return err
+	}
+
+	//cmd.PersistentFlags().BoolVar(&t.config.PreserveConfig, "xud.preserve-config", false, "Preserve xud xud.conf file during updates")
 
 	return nil
 }

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
+// TODO support variable replacement in usage tag
 type LndConfig struct {
-	Mode           string
-	PreserveConfig bool
+	Mode           string `usage:"Lnd service mode"`
+	PreserveConfig bool   `usage:"Preserve lnd.conf file during updates"`
 }
 
 type Lnd struct {
@@ -37,18 +37,22 @@ func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().StringVar(
-		&t.config.Mode,
-		fmt.Sprintf("%s.mode", t.Name),
-		"native",
-		fmt.Sprintf("%s service mode", strings.Title(t.Name)),
-	)
-	cmd.PersistentFlags().BoolVar(
-		&t.config.PreserveConfig,
-		fmt.Sprintf("%s.preserve-config", t.Name),
-		false,
-		fmt.Sprintf("Preserve %s lnd.conf file during updates", t.Name),
-	)
+	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+		return err
+	}
+
+	//cmd.PersistentFlags().StringVar(
+	//	&t.config.Mode,
+	//	fmt.Sprintf("%s.mode", t.Name),
+	//	"native",
+	//	fmt.Sprintf("%s service mode", strings.Title(t.Name)),
+	//)
+	//cmd.PersistentFlags().BoolVar(
+	//	&t.config.PreserveConfig,
+	//	fmt.Sprintf("%s.preserve-config", t.Name),
+	//	false,
+	//	fmt.Sprintf("Preserve %s lnd.conf file during updates", t.Name),
+	//)
 
 	return nil
 }

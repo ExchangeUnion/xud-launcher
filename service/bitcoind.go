@@ -7,13 +7,13 @@ import (
 )
 
 type BitcoindConfig struct {
-	Mode           string
-	Rpchost        string
-	Rpcport        uint16
-	Rpcuser        string
-	Rpcpass        string
-	Zmqpubrawblock string
-	Zmqpubrawtx    string
+	Mode           string `usage:"Bitcoind service mode"`
+	Rpchost        string `usage:"External bitcoind RPC hostname"`
+	Rpcport        uint16 `usage:"External bitcoind RPC port"`
+	Rpcuser        string `usage:"External bitcoind RPC username"`
+	Rpcpass        string `usage:"External bitcoind RPC password"`
+	Zmqpubrawblock string `usage:"External bitcoind ZeroMQ raw blocks publication address"`
+	Zmqpubrawtx    string `usage:"External bitcoind ZeroMQ raw transactions publication address"`
 }
 
 type Bitcoind struct {
@@ -39,13 +39,17 @@ func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().StringVar(&t.config.Mode, "bitcoind.mode", "light", "Bitcoind service mode")
-	cmd.PersistentFlags().StringVar(&t.config.Rpchost, "bitcoind.rpchost", "", "External bitcoind RPC hostname")
-	cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "bitcoind.rpcport", 0, "External bitcoind RPC port")
-	cmd.PersistentFlags().StringVar(&t.config.Rpcuser, "bitcoind.rpcuser", "", "External bitcoind RPC username")
-	cmd.PersistentFlags().StringVar(&t.config.Rpcpass, "bitcoind.rpcpass", "", "External bitcoind RPC password")
-	cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawblock, "bitcoind.zmqpubrawblock", "", "External bitcoind ZeroMQ raw blocks publication address")
-	cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawtx, "bitcoind.zmqpubrawtx", "", "External bitcoind ZeroMQ raw transactions publication address")
+	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+		return err
+	}
+
+	//cmd.PersistentFlags().StringVar(&t.config.Mode, "bitcoind.mode", "light", "Bitcoind service mode")
+	//cmd.PersistentFlags().StringVar(&t.config.Rpchost, "bitcoind.rpchost", "", "External bitcoind RPC hostname")
+	//cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "bitcoind.rpcport", 0, "External bitcoind RPC port")
+	//cmd.PersistentFlags().StringVar(&t.config.Rpcuser, "bitcoind.rpcuser", "", "External bitcoind RPC username")
+	//cmd.PersistentFlags().StringVar(&t.config.Rpcpass, "bitcoind.rpcpass", "", "External bitcoind RPC password")
+	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawblock, "bitcoind.zmqpubrawblock", "", "External bitcoind ZeroMQ raw blocks publication address")
+	//cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawtx, "bitcoind.zmqpubrawtx", "", "External bitcoind ZeroMQ raw transactions publication address")
 
 	return nil
 }

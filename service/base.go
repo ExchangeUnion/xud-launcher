@@ -1,8 +1,12 @@
 package service
 
 import (
+	"errors"
 	"fmt"
+	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"reflect"
 )
 
 type BaseConfig struct {
@@ -14,9 +18,8 @@ type BaseConfig struct {
 
 type SharedConfig struct {
 	Network        string
-	SimnetDir      string
-	TestnetDir     string
-	MainnetDir     string
+	HomeDir        string
+	NetworkDir     string
 	ExternalIp     string
 	Dev            bool
 	UseLocalImages string
@@ -47,33 +50,51 @@ func newBase(name string) Base {
 }
 
 func (t *Base) ConfigureFlags(defaultValues *BaseConfig, cmd *cobra.Command) error {
+	var key string
+
+	key = fmt.Sprintf("%s.disabled", t.Name)
 	cmd.PersistentFlags().BoolVar(
 		&t.config.Disable,
-		fmt.Sprintf("%s.disabled", t.Name),
+		key,
 		defaultValues.Disable,
 		fmt.Sprintf("Enable/Disable %s service", t.Name),
 	)
+	if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
+		return err
+	}
 
+	key = fmt.Sprintf("%s.expose-ports", t.Name)
 	cmd.PersistentFlags().StringSliceVar(
 		&t.config.ExposePorts,
-		fmt.Sprintf("%s.expose-ports", t.Name),
+		key,
 		defaultValues.ExposePorts,
 		fmt.Sprintf("Expose %s service ports to your host machine", t.Name),
 	)
+	if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
+		return err
+	}
 
+	key = fmt.Sprintf("%s.dir", t.Name)
 	cmd.PersistentFlags().StringVar(
 		&t.config.Dir,
-		fmt.Sprintf("%s.dir", t.Name),
+		key,
 		defaultValues.Dir,
 		fmt.Sprintf("Specify the main data directory of %s service", t.Name),
 	)
+	if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
+		return err
+	}
 
+	key = fmt.Sprintf("%s.image", t.Name)
 	cmd.PersistentFlags().StringVar(
 		&t.config.Image,
-		fmt.Sprintf("%s.image", t.Name),
+		key,
 		"",
 		fmt.Sprintf("Specify the image of %s service", t.Name),
 	)
+	if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -173,5 +194,33 @@ func NewService(name string) Service {
 		return &s
 	}
 
+	return nil
+}
+
+func ReflectFlags(name string, config interface{}, cmd *cobra.Command) error {
+	v := reflect.ValueOf(config).Elem()
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		fn := field.Name
+		usage := field.Tag.Get("usage")
+		ft := field.Type
+		key := fmt.Sprintf("%s.%s", name, strcase.ToKebab(fn))
+		p := v.FieldByName(fn).Addr().Interface()
+		switch ft.Kind() {
+		case reflect.String:
+			cmd.PersistentFlags().StringVar(p.(*string), key, "", usage)
+		case reflect.Bool:
+			fmt.Printf("%s p=%p\n", name, p)
+			cmd.PersistentFlags().BoolVar(p.(*bool), key, false, usage)
+		case reflect.Uint16:
+			cmd.PersistentFlags().Uint16Var(p.(*uint16), key, 0, usage)
+		default:
+			return errors.New("unsupported config struct field type: " + ft.Kind().String())
+		}
+		if err := viper.BindPFlag(key, cmd.PersistentFlags().Lookup(key)); err != nil {
+			return err
+		}
+	}
 	return nil
 }

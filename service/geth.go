@@ -7,13 +7,13 @@ import (
 )
 
 type GethConfig struct {
-	Mode                string
-	Rpchost             string
-	Rpcport             uint16
-	InfuraProjectId     string
-	InfuraProjectSecret string
-	Cache               string
-	AncientChaindataDir string
+	Mode                string `usage:"Geth service mode"`
+	Rpchost             string `usage:"External geth RPC hostname"`
+	Rpcport             uint16 `usage:"External geth RPC port"`
+	InfuraProjectId     string `usage:"Infura geth provider project ID"`
+	InfuraProjectSecret string `usage:"Infura geth provider project secret"`
+	Cache               string `usage:"Geth cache size"`
+	AncientChaindataDir string `usage:"Specify the container's volume mapping ancient chaindata directory. Can be located on a slower HDD."`
 }
 
 type Geth struct {
@@ -39,13 +39,17 @@ func (t *Geth) ConfigureFlags(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().StringVar(&t.config.Mode, "geth.mode", "light", "Geth service mode")
-	cmd.PersistentFlags().StringVar(&t.config.Rpchost, "geth.rpchost", "", "External geth RPC hostname")
-	cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "geth.rpcport", 0, "External geth RPC port")
-	cmd.PersistentFlags().StringVar(&t.config.InfuraProjectId, "geth.infura-project-id", "", "Infura geth provider project ID")
-	cmd.PersistentFlags().StringVar(&t.config.InfuraProjectSecret, "geth.infura-project-secret", "", "Infura geth provider project secret")
-	cmd.PersistentFlags().StringVar(&t.config.Cache, "geth.cache", "", "Geth cache size")
-	cmd.PersistentFlags().StringVar(&t.config.AncientChaindataDir, "geth.ancient-chaindata-dir", "", "Specify the container's volume mapping ancient chaindata directory. Can be located on a slower HDD.")
+	if err := ReflectFlags(t.Name, &t.config, cmd); err != nil {
+		return err
+	}
+
+	//cmd.PersistentFlags().StringVar(&t.config.Mode, "geth.mode", "light", "Geth service mode")
+	//cmd.PersistentFlags().StringVar(&t.config.Rpchost, "geth.rpchost", "", "External geth RPC hostname")
+	//cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "geth.rpcport", 0, "External geth RPC port")
+	//cmd.PersistentFlags().StringVar(&t.config.InfuraProjectId, "geth.infura-project-id", "", "Infura geth provider project ID")
+	//cmd.PersistentFlags().StringVar(&t.config.InfuraProjectSecret, "geth.infura-project-secret", "", "Infura geth provider project secret")
+	//cmd.PersistentFlags().StringVar(&t.config.Cache, "geth.cache", "", "Geth cache size")
+	//cmd.PersistentFlags().StringVar(&t.config.AncientChaindataDir, "geth.ancient-chaindata-dir", "", "Specify the container's volume mapping ancient chaindata directory. Can be located on a slower HDD.")
 
 	return nil
 }

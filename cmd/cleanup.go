@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -76,7 +75,7 @@ var cleanupCmd = &cobra.Command{
 
 		home, err := homedir.Dir()
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 		networkDir := path.Join(home, ".xud-docker", network)
 		fmt.Println(networkDir)
@@ -86,7 +85,7 @@ var cleanupCmd = &cobra.Command{
 			var reply string
 			_, err := fmt.Scanln(&reply)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 			reply = strings.ToLower(reply)
 			if reply == "y" || reply == "yes" {
@@ -106,7 +105,7 @@ func getRunningContainers(network string) []string {
 	filter := fmt.Sprintf("name=%s_", network)
 	out, err := exec.Command("docker", "ps", "--filter", filter, "--format", "{{.ID}}").Output()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(out))
 	for s.Scan() {
@@ -120,7 +119,7 @@ func getContainers(network string) []string {
 	filter := fmt.Sprintf("name=%s_", network)
 	out, err := exec.Command("docker", "ps", "--filter", filter, "--format", "{{.ID}}", "-a").Output()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(out))
 	for s.Scan() {
@@ -134,7 +133,7 @@ func getNetworks(network string) []string {
 	filter := fmt.Sprintf("name=%s_", network)
 	out, err := exec.Command("docker", "network", "ls", "--filter", filter, "--format", "{{.ID}}").Output()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(out))
 	for s.Scan() {
@@ -147,7 +146,7 @@ func stopContainer(id string) {
 	fmt.Println(id)
 	err := exec.Command("docker", "stop", id).Run()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -155,7 +154,7 @@ func removeContainer(id string) {
 	fmt.Println(id)
 	err := exec.Command("docker", "rm", id).Run()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -163,7 +162,7 @@ func removeNetwork(id string) {
 	fmt.Println(id)
 	err := exec.Command("docker", "network", "rm", id).Run()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -171,6 +170,6 @@ func removeDir(path string) {
 	fmt.Println(path)
 	err := exec.Command("sudo", "rm", "-rf", path).Run()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }

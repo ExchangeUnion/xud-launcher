@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"github.com/reliveyy/xud-launcher/service"
 	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -18,9 +16,6 @@ var (
 )
 
 func init() {
-	genCmd.PersistentFlags().StringVar(&config.SimnetDir, "simnet-dir", "", "Simnet environment folder")
-	genCmd.PersistentFlags().StringVar(&config.TestnetDir, "testnet-dir", "", "Testnet environment folder")
-	genCmd.PersistentFlags().StringVar(&config.MainnetDir, "mainnet-dir", "", "Mainnet environment folder")
 	genCmd.PersistentFlags().StringVar(&config.ExternalIp, "external-ip", "", "Host machine external IP address")
 	genCmd.PersistentFlags().BoolVar(&config.Dev, "dev", false, "Use local built utils image")
 	genCmd.PersistentFlags().StringVar(&config.UseLocalImages, "use-local-images", "", "Use other local built images")
@@ -46,7 +41,7 @@ func init() {
 		s := service.NewService(name)
 		err := s.ConfigureFlags(genCmd)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 		services[name] = s
 	}
@@ -130,26 +125,24 @@ var genCmd = &cobra.Command{
 	Short: "Generate docker-compose.yml file from xud-docker configurations",
 	Long:  `...`,
 	Run: func(cmd *cobra.Command, args []string) {
-		homeDir, err := homedir.Dir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		homeDir = path.Join(homeDir, ".xud-docker")
+
 		//generalConf := path.Join(homeDir, "xud-docker.conf")
-		networkDir := path.Join(homeDir, network)
 		//networkConf := path.Join(networkDir, fmt.Sprintf("%s.conf", network))
 
 		config.Network = network
+		config.HomeDir = homeDir
+		config.NetworkDir = networkDir
 
-		var validServices = []service.Service{}
+		var validServices []service.Service
 
 		for name, s := range services {
 			if bypass(network, s) {
+				logger.Debugf("Bypass %s", s.GetName())
 				continue
 			}
-			err = s.Apply(&config, services)
+			err := s.Apply(&config, services)
 			if err != nil {
-				log.Fatalf("%s: %s", name, err)
+				logger.Fatalf("%s: %s", name, err)
 			}
 			validServices = append(validServices, s)
 		}
@@ -157,12 +150,12 @@ var genCmd = &cobra.Command{
 		composeFile := path.Join(networkDir, "docker-compose.yml")
 		f, err := os.Create(composeFile)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 		defer f.Close()
 		yml := Export(validServices)
 		f.WriteString(yml)
 
-		fmt.Printf("Exported to %s\n", composeFile)
+		logger.Infof("Exported to %s\n", composeFile)
 	},
 }

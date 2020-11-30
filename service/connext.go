@@ -1,8 +1,13 @@
 package service
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 type ConnextConfig struct {
@@ -51,9 +56,11 @@ func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error
 		return err
 	}
 
-	// connext apply
 	t.Environment["NETWORK"] = network
-	t.Environment["VECTOR_CONFIG"] = `{
+
+	// connext apply
+	if strings.Contains(t.Image, "vector_node") {
+		t.Environment["VECTOR_CONFIG"] = `{
 	"adminToken": "ddrWR8TK8UMTyR",
 	"chainAddresses": {
 		"1337": {
@@ -72,8 +79,77 @@ func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error
 	"production": true,
 	"mnemonic": "crazy angry east hood fiber awake leg knife entire excite output scheme"
 }`
-	t.Environment["VECTOR_SQLITE_FILE"] = "/database/store.db"
-	t.Environment["VECTOR_PROD"] = "true"
+		t.Environment["VECTOR_SQLITE_FILE"] = "/database/store.db"
+		t.Environment["VECTOR_PROD"] = "true"
+	} else {
+		t.Environment["LEGACY_MODE"] = "true"
+		switch network {
+		case "simnet":
+			t.Environment["CONNEXT_ETH_PROVIDER_URL"] = "http://connext.simnet.exchangeunion.com:8545"
+			t.Environment["CONNEXT_NODE_URL"] = "https://connext.simnet.exchangeunion.com"
+		case "testnet":
+			t.Environment["CONNEXT_NODE_URL"] = "https://connext.testnet.exchangeunion.com"
+		case "mainnet":
+			t.Environment["CONNEXT_NODE_URL"] = "https://connext.boltz.exchange"
+		}
+
+		gethConfig := services["geth"].GetConfig().(GethConfig)
+
+		mode := gethConfig.Mode
+		switch mode {
+		case "external":
+			rpcHost := gethConfig.Rpchost
+			rpcPort := gethConfig.Rpcport
+			t.Environment["CONNEXT_ETH_PROVIDER_URL"] = fmt.Sprintf("http://%s:%d", rpcHost, rpcPort)
+		case "infura":
+			projId := gethConfig.InfuraProjectId
+			switch network {
+			case "mainnet":
+				t.Environment["CONNEXT_ETH_PROVIDER_URL"] = fmt.Sprintf("https://mainnet.infura.io/v3/%s", projId)
+			case "testnet":
+				t.Environment["CONNEXT_ETH_PROVIDER_URL"] = fmt.Sprintf("https://rinkeby.infura.io/v3/%s", projId)
+			case "simnet":
+				return errors.New("no Infura Ethereum provider for simnet")
+			}
+		case "light":
+			t.Environment["CONNEXT_ETH_PROVIDER_URL"] = selectFastestProvider(ethProviders[network])
+		case "native":
+			t.Environment["CONNEXT_ETH_PROVIDER_URL"] = "http://geth:8545"
+		}
+	}
 
 	return nil
+}
+
+func checkProvider(url string) error {
+	var payload = []byte(`{"jsonrpc":"2.0","method":"net_version","params":[],"id":1}`)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(body))
+
+	return nil
+}
+
+func selectFastestProvider(providers []string) string {
+	return "http://eth.kilrau.com:52041" // FIXME implement selecting fastest provider
 }

@@ -70,7 +70,8 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Volumes = append(t.Volumes,
 		"./data/lndbtc:/root/.lndbtc",
 		"./data/lndltc:/root/.lndltc",
-		"/:/mnt/hostfs",
+		//"/:/mnt/hostfs",
+		"./backup:/root/backup",
 	)
 
 	switch network {

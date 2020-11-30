@@ -41,6 +41,7 @@ type Base struct {
 	Command     []string
 	Ports       []string
 	Volumes     []string
+	Hostname    string
 
 	config BaseConfig
 }
@@ -53,6 +54,7 @@ func newBase(name string) Base {
 		Command:     []string{},
 		Ports:       []string{},
 		Volumes:     []string{},
+		Hostname:    "",
 	}
 }
 
@@ -115,6 +117,10 @@ func (t *Base) GetPorts() []string {
 	return t.Ports
 }
 
+func (t *Base) GetHostname() string {
+	return t.Hostname
+}
+
 func (t *Base) IsDisabled() bool {
 	return t.config.Disabled
 }
@@ -130,6 +136,7 @@ type Service interface {
 	GetEnvironment() map[string]string
 	GetVolumes() []string
 	GetPorts() []string
+	GetHostname() string
 	IsDisabled() bool
 }
 

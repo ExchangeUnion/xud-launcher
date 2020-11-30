@@ -64,6 +64,10 @@ func Export(services []service.Service) string {
 
 		result += fmt.Sprintf("    image: %s\n", s.GetImage())
 
+		if s.GetHostname() != "" {
+			result += fmt.Sprintf("    hostname: %s\n", s.GetName())
+		}
+
 		if len(s.GetCommand()) > 0 {
 			result += fmt.Sprintf("    command: >\n")
 			for _, arg := range s.GetCommand() {

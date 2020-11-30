@@ -150,5 +150,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 		}
 	}
 
+	t.Hostname = t.Name
+
 	return nil
 }

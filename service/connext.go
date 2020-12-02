@@ -27,7 +27,7 @@ func newConnext(name string) Connext {
 }
 
 func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, false); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 
@@ -151,5 +151,5 @@ func checkProvider(url string) error {
 }
 
 func selectFastestProvider(providers []string) string {
-	return "http://eth.kilrau.com:52041" // FIXME implement selecting fastest provider
+	return providers[0]
 }

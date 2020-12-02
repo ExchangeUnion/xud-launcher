@@ -22,7 +22,7 @@ func newProxy(name string) Proxy {
 }
 
 func (t *Proxy) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, false); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 

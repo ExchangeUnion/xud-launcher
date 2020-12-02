@@ -105,6 +105,10 @@ func Export(services []service.Service) string {
 				result += fmt.Sprintf("      - %s\n", port)
 			}
 		}
+
+		if s.GetName() == "xud" {
+			result += fmt.Sprintf("    entrypoint: [\"bash\", \"-c\", \"echo /root/backup > /root/.xud/.backup-dir-value && /entrypoint.sh\"]\n")
+		}
 	}
 
 	return result

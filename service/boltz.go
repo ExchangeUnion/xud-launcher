@@ -22,7 +22,7 @@ func newBoltz(name string) Boltz {
 }
 
 func (t *Boltz) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 
@@ -52,6 +52,10 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// boltz apply
+
+	if network == "simnet" {
+		t.Disabled = true
+	}
 
 	return nil
 }

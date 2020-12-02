@@ -43,6 +43,8 @@ type Base struct {
 	Volumes     []string
 	Hostname    string
 
+	Disabled bool
+
 	config BaseConfig
 }
 
@@ -58,9 +60,9 @@ func newBase(name string) Base {
 	}
 }
 
-func (t *Base) ConfigureFlags(cmd *cobra.Command, disabled bool) error {
+func (t *Base) ConfigureFlags(cmd *cobra.Command) error {
 	if err := ReflectFlags(t.Name, &t.config, &BaseConfig{
-		Disabled:    disabled,
+		Disabled:    false,
 		ExposePorts: []string{},
 		Dir:         "",
 		Image:       "",
@@ -89,6 +91,8 @@ func (t *Base) Apply(dir string, network string) error {
 	} else {
 		t.Image = t.config.Image
 	}
+
+	t.Disabled = t.config.Disabled
 
 	return nil
 }
@@ -122,7 +126,7 @@ func (t *Base) GetHostname() string {
 }
 
 func (t *Base) IsDisabled() bool {
-	return t.config.Disabled
+	return t.Disabled
 }
 
 type Service interface {

@@ -27,6 +27,8 @@ var setupCmd = &cobra.Command{
 		// start proxy(api) service first
 		upService("proxy")
 
+		// TODO write xud-docker.log
+
 		// start L2 services like lndbtc, lndltc and connext
 		upService("lndbtc")
 		upService("lndltc")

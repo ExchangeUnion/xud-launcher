@@ -28,7 +28,7 @@ func newLitecoind(name string) Litecoind {
 }
 
 func (t *Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 
@@ -69,6 +69,10 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 
 	// litecoind apply
 	t.Environment["NETWORK"] = network
+
+	if t.config.Mode != "native" || network == "simnet" {
+		t.Disabled = true
+	}
 
 	return nil
 }

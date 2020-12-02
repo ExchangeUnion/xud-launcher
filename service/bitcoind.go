@@ -28,7 +28,7 @@ func newBitcoind(name string) Bitcoind {
 }
 
 func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 
@@ -88,6 +88,10 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 		t.Command = append(t.Command, "-rpcport=18332", "-testnet")
 	} else { // mainnet
 		t.Command = append(t.Command, "-rpcport=8332")
+	}
+
+	if t.config.Mode != "native" || network == "simnet" {
+		t.Disabled = true
 	}
 
 	return nil

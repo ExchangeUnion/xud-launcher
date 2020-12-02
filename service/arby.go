@@ -37,7 +37,7 @@ func newArby(name string) Arby {
 func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
 	t.cmd = cmd
 
-	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 

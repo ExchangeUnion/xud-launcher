@@ -22,7 +22,7 @@ func newWebui(name string) Webui {
 }
 
 func (t *Webui) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd, true); err != nil {
+	if err := t.Base.ConfigureFlags(cmd); err != nil {
 		return err
 	}
 
@@ -52,6 +52,7 @@ func (t *Webui) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// webui apply
+	t.Disabled = true
 
 	return nil
 }

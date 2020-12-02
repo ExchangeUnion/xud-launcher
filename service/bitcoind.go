@@ -18,7 +18,8 @@ type BitcoindConfig struct {
 type Bitcoind struct {
 	Base
 
-	config BitcoindConfig
+	config  BitcoindConfig
+	network string
 }
 
 func newBitcoind(name string) Bitcoind {
@@ -60,6 +61,7 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 
@@ -95,4 +97,23 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 	}
 
 	return nil
+}
+
+func (t *Bitcoind) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+	result["mode"] = t.config.Mode
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "JSON-RPC"
+	rpc["host"] = "bitcoind"
+	if t.network == "testnet" {
+		rpc["port"] = 18332
+	} else {
+		rpc["port"] = 8332
+	}
+	rpc["username"] = "xu"
+	rpc["password"] = "xu"
+
+	return result
 }

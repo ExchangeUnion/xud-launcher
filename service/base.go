@@ -14,6 +14,10 @@ var (
 	logger = logrus.New()
 )
 
+const (
+	PROXY_DATA_DIR = "/root/network/data"
+)
+
 func init() {
 	logger.SetLevel(logrus.DebugLevel)
 }
@@ -129,6 +133,14 @@ func (t *Base) IsDisabled() bool {
 	return t.Disabled
 }
 
+func (t *Base) ToJson() map[string]interface{} {
+	var result = make(map[string]interface{})
+	result["name"] = t.Name
+	result["disabled"] = t.Disabled
+	result["rpc"] = make(map[string]interface{})
+	return result
+}
+
 type Service interface {
 	ConfigureFlags(cmd *cobra.Command) error
 	GetConfig() interface{}
@@ -142,6 +154,8 @@ type Service interface {
 	GetPorts() []string
 	GetHostname() string
 	IsDisabled() bool
+
+	ToJson() map[string]interface{}
 }
 
 func NewService(name string) Service {

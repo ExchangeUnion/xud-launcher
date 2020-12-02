@@ -19,7 +19,8 @@ type GethConfig struct {
 type Geth struct {
 	Base
 
-	config GethConfig
+	config  GethConfig
+	network string
 }
 
 func newGeth(name string) Geth {
@@ -61,6 +62,7 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.ethereum", config.Network)
@@ -88,4 +90,17 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	return nil
+}
+
+func (t *Geth) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+	result["mode"] = t.config.Mode
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "JSON-RPC"
+	rpc["host"] = "geth"
+	rpc["port"] = 8545
+
+	return result
 }

@@ -59,3 +59,16 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 
 	return nil
 }
+
+func (t *Boltz) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "gRPC"
+	rpc["host"] = "boltz"
+	rpc["btcPort"] = 9002
+	rpc["ltcPort"] = 9003
+
+	return result
+}

@@ -109,9 +109,9 @@ func initConfig() {
 
 	ensureDir(networkDir)
 
-	dataDir := filepath.Join(networkDir, "data")
+	dataDir = filepath.Join(networkDir, "data")
 	ensureDir(dataDir)
-	logsDir := filepath.Join(networkDir, "logs")
+	logsDir = filepath.Join(networkDir, "logs")
 	ensureDir(logsDir)
 
 	logger.Debugf("homeDir=%s", homeDir)

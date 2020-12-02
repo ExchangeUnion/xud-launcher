@@ -15,8 +15,9 @@ type LndConfig struct {
 type Lnd struct {
 	Base
 
-	config LndConfig
-	Chain  string
+	config  LndConfig
+	Chain   string
+	network string
 }
 
 func newLnd(name string, chain string) Lnd {
@@ -54,6 +55,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.lnd", config.Network)
@@ -153,4 +155,28 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Hostname = t.Name
 
 	return nil
+}
+
+func (t *Lnd) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+
+	result["mode"] = t.config.Mode
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "gRPC"
+
+	var name string
+	switch t.Chain {
+	case "bitcoin":
+		name = "lndbtc"
+	case "litecoin":
+		name = "lndltc"
+	}
+	rpc["host"] = "bitcoind"
+	rpc["port"] = 10009
+	rpc["tlsCert"] = fmt.Sprintf("%s/%s/tls.cert", PROXY_DATA_DIR, name)
+	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/chain/%s/%s/readonly.macaroon", PROXY_DATA_DIR, name, t.Chain, t.network)
+
+	return result
 }

@@ -1,18 +1,19 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/reliveyy/xud-launcher/service"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var (
 	config   service.SharedConfig
 	services map[string]service.Service
-	names    []string
 )
 
 func init() {
@@ -21,7 +22,7 @@ func init() {
 	genCmd.PersistentFlags().StringVar(&config.UseLocalImages, "use-local-images", "", "Use other local built images")
 
 	// [Add capability to restrict flag values to a set of allowed values](https://github.com/spf13/pflag/issues/236)
-	names = []string{
+	names := []string{
 		"bitcoind",
 		"litecoind",
 		"geth",
@@ -114,6 +115,78 @@ func Export(services []service.Service) string {
 	return result
 }
 
+func ExportCompose(services []service.Service) {
+	path := filepath.Join(networkDir, "docker-compose.yml")
+	f, err := os.Create(path)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer f.Close()
+
+	var targets []service.Service
+
+	// filter enabled services
+	for _, s := range services {
+		if s.IsDisabled() {
+			continue
+		}
+		targets = append(targets, s)
+	}
+
+	yml := Export(targets)
+	_, err = f.WriteString(yml)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Infof("Exported to %s\n", path)
+}
+
+type Service struct {
+	Name     string      `json:"name"`
+	Rpc      interface{} `json:"rpc"`
+	Disabled bool        `json:"disabled"`
+	Mode     string      `json:"mode"`
+}
+
+type Config struct {
+	Timestamp string        `json:"timestamp"`
+	Network   string        `json:"network"`
+	Services  []interface{} `json:"services"`
+}
+
+func Export2(services []service.Service) string {
+	var config Config
+	config.Timestamp = fmt.Sprintf("%d", time.Now().Unix())
+	config.Network = network
+	for _, s := range services {
+		if s.GetName() == "proxy" {
+			continue
+		}
+		config.Services = append(config.Services, s.ToJson())
+	}
+	data, err := json.MarshalIndent(config, "", "    ")
+	if err != nil {
+		logger.Fatal(err)
+	}
+	return string(data)
+}
+
+func ExportConfig(services []service.Service) {
+	path := filepath.Join(dataDir, "config.json")
+	f, err := os.Create(path)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer f.Close()
+
+	j := Export2(services)
+	_, err = f.WriteString(j)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Infof("Exported to %s\n", path)
+}
+
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate docker-compose.yml file from xud-docker configurations",
@@ -122,35 +195,46 @@ var genCmd = &cobra.Command{
 		config.HomeDir = homeDir
 		config.NetworkDir = networkDir
 
+		var order []string
+		if network == "simnet" {
+			order = []string{
+				"lndbtc",
+				"lndltc",
+				"connext",
+				"xud",
+				"arby",
+				"webui",
+				"proxy",
+			}
+		} else {
+			order = []string{
+				"bitcoind",
+				"litecoind",
+				"geth",
+				"lndbtc",
+				"lndltc",
+				"connext",
+				"xud",
+				"arby",
+				"boltz",
+				"webui",
+				"proxy",
+			}
+		}
+
+		var targets []service.Service
+
 		// apply for all services
-		for _, name := range names {
+		for _, name := range order {
 			s := services[name]
 			err := s.Apply(&config, services)
 			if err != nil {
 				logger.Fatalf("%s: %s", name, err)
 			}
+			targets = append(targets, s)
 		}
 
-		var enabledServices []service.Service
-
-		// filter enabled services
-		for _, name := range names {
-			s := services[name]
-			if s.IsDisabled() {
-				continue
-			}
-			enabledServices = append(enabledServices, s)
-		}
-
-		composeFile := filepath.Join(networkDir, "docker-compose.yml")
-		f, err := os.Create(composeFile)
-		if err != nil {
-			logger.Fatal(err)
-		}
-		defer f.Close()
-		yml := Export(enabledServices)
-		f.WriteString(yml)
-
-		logger.Infof("Exported to %s\n", composeFile)
+		ExportCompose(targets)
+		ExportConfig(targets)
 	},
 }

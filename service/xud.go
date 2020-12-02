@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,8 @@ type Xud struct {
 	config XudConfig
 
 	PreserveConfig bool
+
+	network string
 }
 
 func newXud(name string) Xud {
@@ -50,6 +53,7 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.xud", config.Network)
@@ -84,4 +88,24 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	return nil
+}
+
+func (t *Xud) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "gRPC"
+	rpc["host"] = "xud"
+	switch t.network {
+	case "simnet":
+		rpc["port"] = 28886
+	case "testnet":
+		rpc["port"] = 18886
+	case "mainnet":
+		rpc["port"] = 8886
+	}
+	rpc["tlsCert"] = fmt.Sprintf("%s/xud/tls.cert", PROXY_DATA_DIR)
+
+	return result
 }

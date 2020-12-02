@@ -2,7 +2,9 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
+	"runtime"
 )
 
 type ProxyConfig struct {
@@ -51,13 +53,18 @@ func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
 		return err
 	}
 
+	var dockerSock string
+
+	if runtime.GOOS == "windows" {
+		dockerSock = "//var/run/docker.sock"
+	} else {
+		dockerSock = "/var/run/docker.sock"
+	}
+
 	// proxy apply
 	t.Volumes = append(t.Volumes,
-		"/var/run/docker.sock:/var/run/docker.sock",
-		"./logs/config.sh:/root/config.sh",
-		"./data/xud:/root/.xud",
-		"./data/lndbtc:/root/.lndbtc",
-		"./data/lndltc:/root/.lndltc",
+		fmt.Sprintf("%s:/var/run/docker.sock", dockerSock),
+		fmt.Sprintf("%s:/root/network:ro", config.NetworkDir),
 	)
 
 	switch network {

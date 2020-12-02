@@ -18,7 +18,8 @@ type LitecoindConfig struct {
 type Litecoind struct {
 	Base
 
-	config LitecoindConfig
+	config  LitecoindConfig
+	network string
 }
 
 func newLitecoind(name string) Litecoind {
@@ -60,6 +61,7 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.litecoind", config.Network)
@@ -75,4 +77,23 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 	}
 
 	return nil
+}
+
+func (t *Litecoind) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+	result["mode"] = t.config.Mode
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "JSON-RPC"
+	rpc["host"] = "litecoind"
+	if t.network == "testnet" {
+		rpc["port"] = 19332
+	} else {
+		rpc["port"] = 9332
+	}
+	rpc["username"] = "xu"
+	rpc["password"] = "xu"
+
+	return result
 }

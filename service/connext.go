@@ -17,7 +17,8 @@ type ConnextConfig struct {
 type Connext struct {
 	Base
 
-	config ConnextConfig
+	config  ConnextConfig
+	network string
 }
 
 func newConnext(name string) Connext {
@@ -49,6 +50,7 @@ func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
+	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/app/connext-store", config.Network)
@@ -152,4 +154,16 @@ func checkProvider(url string) error {
 
 func selectFastestProvider(providers []string) string {
 	return providers[0]
+}
+
+func (t *Connext) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "HTTP"
+	rpc["host"] = "connext"
+	rpc["port"] = 5040
+
+	return result
 }

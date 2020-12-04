@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/mattn/go-colorable"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -109,7 +110,11 @@ func initLogger() *logrus.Entry {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05.000",
+		ForceColors:     true,
 	})
+	if runtime.GOOS == "windows" {
+		logrus.SetOutput(colorable.NewColorableStdout())
+	}
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	return logger
 }

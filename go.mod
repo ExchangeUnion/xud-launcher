@@ -1,4 +1,4 @@
-module github.com/reliveyy/xud-launcher
+module github.com/ExchangeUnion/xud-launcher
 
 go 1.15
 

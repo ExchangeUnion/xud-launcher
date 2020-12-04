@@ -3,7 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/reliveyy/xud-launcher/service"
+	"github.com/ExchangeUnion/xud-launcher/service"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"

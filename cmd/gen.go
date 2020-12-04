@@ -17,32 +17,45 @@ var (
 )
 
 func init() {
-	genCmd.PersistentFlags().StringVar(&config.ExternalIp, "external-ip", "", "Host machine external IP address")
-	genCmd.PersistentFlags().BoolVar(&config.Dev, "dev", false, "Use local built utils image")
-	genCmd.PersistentFlags().StringVar(&config.UseLocalImages, "use-local-images", "", "Use other local built images")
-
 	// [Add capability to restrict flag values to a set of allowed values](https://github.com/spf13/pflag/issues/236)
-	names := []string{
-		"bitcoind",
-		"litecoind",
-		"geth",
-		"lndbtc",
-		"lndltc",
-		"connext",
-		"xud",
-		"arby",
-		"boltz",
-		"webui",
-		"proxy",
+
+	genCmd.PersistentFlags().StringVar(&config.ExternalIp, "external-ip", "", "Host machine external IP address")
+
+	var names []string
+
+	if network == "simnet" {
+		names = []string{
+			"lndbtc",
+			"lndltc",
+			"connext",
+			"xud",
+			"arby",
+			"webui",
+			"proxy",
+		}
+	} else {
+		names = []string{
+			"bitcoind",
+			"litecoind",
+			"geth",
+			"lndbtc",
+			"lndltc",
+			"connext",
+			"xud",
+			"arby",
+			"boltz",
+			"webui",
+			"proxy",
+		}
 	}
 
 	services = make(map[string]service.Service)
 
-	logger.Info("Configuring subcommand flags")
+	logger.Debugf("Configuring subcommand \"gen\" flags")
 
 	for _, name := range names {
 		s := service.NewService(name)
-		err := s.ConfigureFlags(genCmd)
+		err := s.ConfigureFlags(genCmd, network)
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -138,7 +151,7 @@ func ExportCompose(services []service.Service) {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Infof("Exported to %s\n", path)
+	fmt.Printf("Exported %s\n", path)
 }
 
 type Service struct {
@@ -184,7 +197,7 @@ func ExportConfig(services []service.Service) {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Infof("Exported to %s\n", path)
+	fmt.Printf("Exported %s\n", path)
 }
 
 var genCmd = &cobra.Command{

@@ -10,11 +10,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 var (
-	logger     = logrus.New()
-	network    string
+	logger        = initLogger()
+	validNetworks = []string{"mainnet", "testnet", "simnet"}
+	network       = initNetwork()
+
 	homeDir    string
 	networkDir string
 	dataDir    string
@@ -22,7 +25,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "xud-launcher",
-		Short: "XUD environment launcher",
+		Short: fmt.Sprintf("XUD environment launcher (%s)", network),
 	}
 )
 
@@ -57,54 +60,71 @@ func ensureDir(path string) {
 	}
 }
 
-func init() {
-	logger.SetLevel(logrus.DebugLevel)
+func initNetwork() string {
+	n := os.Getenv("NETWORK")
+	n = strings.TrimSpace(n)
+	n = strings.ToLower(n)
+	if n == "" {
+		logger.Debug("Use network: mainnet")
+		return "mainnet" // default network
+	}
+	var valid = false
+	for _, vn := range validNetworks {
+		if n == vn {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		logger.Fatalf("Invalid network: %s", n)
+	}
+	logger.Debugf("Use network: %s", n)
+	return n
+}
 
+func initLogger() *logrus.Entry {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05.000",
+	})
+	logger := logrus.NewEntry(logrus.StandardLogger())
+	return logger
+}
+
+func init() {
 	homeDir = getHomeDir()
 	ensureDir(homeDir)
 
+	logger.Debugf("Configuring global flags")
+
+	key := fmt.Sprintf("%s-dir", network)
+
+	rootCmd.PersistentFlags().StringVar(
+		&networkDir,
+		key,
+		filepath.Join(homeDir, network),
+		fmt.Sprintf("%s environment folder", strings.Title(network)),
+	)
+
+	if err := viper.BindPFlag(key, rootCmd.PersistentFlags().Lookup(key)); err != nil {
+		logger.Fatal("Failed to bind Viper key %s: %s", key, err)
+	}
+
 	cobra.OnInitialize(initConfig)
-
-	logger.Info("Configuring global flags")
-
-	rootCmd.PersistentFlags().StringVarP(&network, "network", "n", "simnet", "specify XUD network")
-	rootCmd.PersistentFlags().String("simnet-dir", filepath.Join(homeDir, "simnet"), "Simnet environment folder")
-	rootCmd.PersistentFlags().String("testnet-dir", filepath.Join(homeDir, "testnet"), "Testnet environment folder")
-	rootCmd.PersistentFlags().String("mainnet-dir", filepath.Join(homeDir, "mainnet"), "Mainnet environment folder")
-
-	if err := viper.BindPFlag("simnet-dir", rootCmd.PersistentFlags().Lookup("simnet-dir")); err != nil {
-		logger.Fatal(err)
-	}
-	if err := viper.BindPFlag("testnet-dir", rootCmd.PersistentFlags().Lookup("testnet-dir")); err != nil {
-		logger.Fatal(err)
-	}
-	if err := viper.BindPFlag("mainnet-dir", rootCmd.PersistentFlags().Lookup("mainnet-dir")); err != nil {
-		logger.Fatal(err)
-	}
 }
 
 func initConfig() {
 	generalConf := filepath.Join(homeDir, "xud-docker.conf")
+	logger.Debugf("Loading general config file: %s", generalConf)
+
 	viper.SetConfigFile(generalConf)
 	viper.SetConfigType("toml")
-
 	viper.AutomaticEnv()
 
-	logger.Infof("Loading general config file: %s", generalConf)
 	err := viper.ReadInConfig()
 	if err != nil {
-		logger.Info(err)
-	}
-
-	switch network {
-	case "simnet":
-		networkDir = viper.GetString("simnet-dir")
-	case "testnet":
-		networkDir = viper.GetString("testnet-dir")
-	case "mainnet":
-		networkDir = viper.GetString("mainnet-dir")
-	default:
-		panic(errors.New("invalid network: " + network))
+		logger.Debugf("Failed to load general config: %s", err)
 	}
 
 	ensureDir(networkDir)
@@ -120,12 +140,13 @@ func initConfig() {
 	logger.Debugf("logsDir=%s", logsDir)
 
 	networkConf := filepath.Join(networkDir, fmt.Sprintf("%s.conf", network))
+	logger.Debugf("Loading network config file: %s", networkConf)
+
 	viper.SetConfigFile(networkConf)
 	viper.SetConfigType("toml")
 
-	logger.Infof("Loading network config file: %s", networkConf)
 	err = viper.MergeInConfig()
 	if err != nil {
-		logger.Info(err)
+		logger.Debugf("Failed to load network config: %s", err)
 	}
 }

@@ -48,8 +48,9 @@ type Base struct {
 	Hostname    string
 
 	Disabled bool
+	Network  string
 
-	config BaseConfig
+	Config BaseConfig
 }
 
 func newBase(name string) Base {
@@ -64,12 +65,12 @@ func newBase(name string) Base {
 	}
 }
 
-func (t *Base) ConfigureFlags(cmd *cobra.Command) error {
-	if err := ReflectFlags(t.Name, &t.config, &BaseConfig{
+func (t *Base) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := ReflectFlags(t.Name, &t.Config, &BaseConfig{
 		Disabled:    false,
 		ExposePorts: []string{},
-		Dir:         "",
-		Image:       "",
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
 	}, cmd); err != nil {
 		return err
 	}
@@ -78,25 +79,19 @@ func (t *Base) ConfigureFlags(cmd *cobra.Command) error {
 
 func (t *Base) Apply(dir string, network string) error {
 
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
-	for _, port := range t.config.ExposePorts {
+	for _, port := range t.Config.ExposePorts {
 		t.Ports = append(t.Ports, port)
 	}
 
-	if t.config.Dir == "" {
-		t.Volumes = append(t.Volumes, fmt.Sprintf("./data/%s:%s", t.Name, dir))
-	} else {
-		t.Volumes = append(t.Volumes, fmt.Sprintf("%s:%s", t.config.Dir, dir))
-	}
+	t.Volumes = append(t.Volumes, fmt.Sprintf("%s:%s", t.Config.Dir, dir))
 
-	if t.config.Image == "" {
-		t.Image = images[network][t.Name]
-	} else {
-		t.Image = t.config.Image
-	}
+	t.Image = t.Config.Image
 
-	t.Disabled = t.config.Disabled
+	t.Disabled = t.Config.Disabled
+
+	t.Network = network
 
 	return nil
 }
@@ -139,23 +134,6 @@ func (t *Base) ToJson() map[string]interface{} {
 	result["disabled"] = t.Disabled
 	result["rpc"] = make(map[string]interface{})
 	return result
-}
-
-type Service interface {
-	ConfigureFlags(cmd *cobra.Command) error
-	GetConfig() interface{}
-	GetName() string
-	Apply(config *SharedConfig, services map[string]Service) error
-
-	GetImage() string
-	GetCommand() []string
-	GetEnvironment() map[string]string
-	GetVolumes() []string
-	GetPorts() []string
-	GetHostname() string
-	IsDisabled() bool
-
-	ToJson() map[string]interface{}
 }
 
 func NewService(name string) Service {

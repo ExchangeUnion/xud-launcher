@@ -15,9 +15,8 @@ type LndConfig struct {
 type Lnd struct {
 	Base
 
-	config  LndConfig
-	Chain   string
-	network string
+	Config LndConfig
+	Chain  string
 }
 
 func newLnd(name string, chain string) Lnd {
@@ -27,12 +26,12 @@ func newLnd(name string, chain string) Lnd {
 	}
 }
 
-func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Lnd) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &LndConfig{
+	if err := ReflectFlags(t.Name, &t.Config, &LndConfig{
 		Mode:           "native",
 		PreserveConfig: "false",
 	}, cmd); err != nil {
@@ -43,11 +42,11 @@ func (t *Lnd) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Lnd) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -55,7 +54,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
+	t.Network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.lnd", config.Network)
@@ -67,7 +66,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["NETWORK"] = network
 	t.Environment["CHAIN"] = t.Chain
 
-	if t.config.PreserveConfig == "true" {
+	if t.Config.PreserveConfig == "true" {
 		t.Environment["PRESERVE_CONFIG"] = "true"
 	} else {
 		t.Environment["PRESERVE_CONFIG"] = "false"
@@ -160,7 +159,7 @@ func (t *Lnd) Apply(config *SharedConfig, services map[string]Service) error {
 func (t *Lnd) ToJson() map[string]interface{} {
 	result := t.Base.ToJson()
 
-	result["mode"] = t.config.Mode
+	result["mode"] = t.Config.Mode
 
 	rpc := make(map[string]interface{})
 	result["rpc"] = rpc
@@ -176,7 +175,7 @@ func (t *Lnd) ToJson() map[string]interface{} {
 	rpc["host"] = "bitcoind"
 	rpc["port"] = 10009
 	rpc["tlsCert"] = fmt.Sprintf("%s/%s/tls.cert", PROXY_DATA_DIR, name)
-	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/chain/%s/%s/readonly.macaroon", PROXY_DATA_DIR, name, t.Chain, t.network)
+	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/chain/%s/%s/readonly.macaroon", PROXY_DATA_DIR, name, t.Chain, t.Network)
 
 	return result
 }

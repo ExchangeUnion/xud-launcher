@@ -13,11 +13,9 @@ type XudConfig struct {
 type Xud struct {
 	Base
 
-	config XudConfig
+	Config XudConfig
 
 	PreserveConfig bool
-
-	network string
 }
 
 func newXud(name string) Xud {
@@ -26,12 +24,12 @@ func newXud(name string) Xud {
 	}
 }
 
-func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Xud) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &XudConfig{
+	if err := ReflectFlags(t.Name, &t.Config, &XudConfig{
 		PreserveConfig: "",
 	}, cmd); err != nil {
 		return err
@@ -41,11 +39,11 @@ func (t *Xud) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Xud) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -53,7 +51,6 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.xud", config.Network)
@@ -65,7 +62,7 @@ func (t *Xud) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["NETWORK"] = network
 	t.Environment["NODE_ENV"] = "production"
 
-	if t.config.PreserveConfig == "true" {
+	if t.Config.PreserveConfig == "true" {
 		t.Environment["PRESERVE_CONFIG"] = "true"
 	} else {
 		t.Environment["PRESERVE_CONFIG"] = "false"
@@ -97,7 +94,7 @@ func (t *Xud) ToJson() map[string]interface{} {
 	result["rpc"] = rpc
 	rpc["type"] = "gRPC"
 	rpc["host"] = "xud"
-	switch t.network {
+	switch t.Network {
 	case "simnet":
 		rpc["port"] = 28886
 	case "testnet":

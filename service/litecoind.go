@@ -18,8 +18,7 @@ type LitecoindConfig struct {
 type Litecoind struct {
 	Base
 
-	config  LitecoindConfig
-	network string
+	Config LitecoindConfig
 }
 
 func newLitecoind(name string) Litecoind {
@@ -28,12 +27,12 @@ func newLitecoind(name string) Litecoind {
 	}
 }
 
-func (t *Litecoind) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Litecoind) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &LitecoindConfig{
+	if err := ReflectFlags(t.Name, &t.Config, &LitecoindConfig{
 		Mode:           "light",
 		Rpchost:        "",
 		Rpcport:        0,
@@ -49,11 +48,11 @@ func (t *Litecoind) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Litecoind) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -61,7 +60,6 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.litecoind", config.Network)
@@ -72,7 +70,7 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 	// litecoind apply
 	t.Environment["NETWORK"] = network
 
-	if t.config.Mode != "native" || network == "simnet" {
+	if t.Config.Mode != "native" || network == "simnet" {
 		t.Disabled = true
 	}
 
@@ -81,13 +79,13 @@ func (t *Litecoind) Apply(config *SharedConfig, services map[string]Service) err
 
 func (t *Litecoind) ToJson() map[string]interface{} {
 	result := t.Base.ToJson()
-	result["mode"] = t.config.Mode
+	result["mode"] = t.Config.Mode
 
 	rpc := make(map[string]interface{})
 	result["rpc"] = rpc
 	rpc["type"] = "JSON-RPC"
 	rpc["host"] = "litecoind"
-	if t.network == "testnet" {
+	if t.Network == "testnet" {
 		rpc["port"] = 19332
 	} else {
 		rpc["port"] = 9332

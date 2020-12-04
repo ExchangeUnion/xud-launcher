@@ -13,8 +13,6 @@ import (
 	"strings"
 )
 
-var validNetworks = []string{"simnet", "testnet", "mainnet"}
-
 func isValidNetwork(network string) bool {
 	network = strings.TrimSpace(network)
 	network = strings.ToLower(network)

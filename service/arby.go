@@ -7,8 +7,8 @@ import (
 )
 
 type ArbyConfig struct {
-	LiveCex                          string `usage:"Live CEX (deprecated)"`
-	TestMode                         string `usage:"Whether to issue real orders on the centralized exchange"`
+	LiveCex                          bool   `usage:"Live CEX (deprecated)"`
+	TestMode                         bool   `usage:"Whether to issue real orders on the centralized exchange"`
 	BaseAsset                        string `usage:"Base asset"`
 	QuoteAsset                       string `usage:"Quote asset"`
 	CexBaseAsset                     string `usage:"Centralized exchange base asset"`
@@ -24,8 +24,7 @@ type ArbyConfig struct {
 type Arby struct {
 	Base
 
-	config ArbyConfig
-	cmd    *cobra.Command
+	Config ArbyConfig
 }
 
 func newArby(name string) Arby {
@@ -34,15 +33,14 @@ func newArby(name string) Arby {
 	}
 }
 
-func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
-	t.cmd = cmd
-
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Arby) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &ArbyConfig{
-		TestMode:                         "",
+	if err := ReflectFlags(t.Name, &t.Config, &ArbyConfig{
+		LiveCex:                          true,
+		TestMode:                         true,
 		BaseAsset:                        "",
 		QuoteAsset:                       "",
 		CexBaseAsset:                     "",
@@ -65,11 +63,11 @@ func (t *Arby) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Arby) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -104,18 +102,18 @@ func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
 	t.Environment["DATA_DIR"] = "/root/.arby"
 	t.Environment["OPENDEX_CERT_PATH"] = "/root/.xud/tls.cert"
 	t.Environment["OPENDEX_RPC_HOST"] = "xud"
-	t.Environment["BASEASSET"] = t.config.BaseAsset
-	t.Environment["QUOTEASSET"] = t.config.QuoteAsset
-	t.Environment["CEX_BASEASSET"] = t.config.CexBaseAsset
-	t.Environment["CEX_QUOTEASSET"] = t.config.CexQuoteAsset
+	t.Environment["BASEASSET"] = t.Config.BaseAsset
+	t.Environment["QUOTEASSET"] = t.Config.QuoteAsset
+	t.Environment["CEX_BASEASSET"] = t.Config.CexBaseAsset
+	t.Environment["CEX_QUOTEASSET"] = t.Config.CexQuoteAsset
 	t.Environment["OPENDEX_RPC_PORT"] = rpcPort
-	t.Environment["CEX"] = t.config.Cex
-	t.Environment["CEX_API_SECRET"] = t.config.CexApiSecret
-	t.Environment["CEX_API_KEY"] = t.config.CexApiKey
-	t.Environment["TEST_MODE"] = fmt.Sprint(t.config.TestMode)
-	t.Environment["MARGIN"] = t.config.Margin
-	t.Environment["TEST_CENTRALIZED_EXCHANGE_BASEASSET_BALANCE"] = t.config.TestCentralizedBaseassetBalance
-	t.Environment["TEST_CENTRALIZED_EXCHANGE_QUOTEASSET_BALANCE"] = t.config.TestCentralizedQuoteassetBalance
+	t.Environment["CEX"] = t.Config.Cex
+	t.Environment["CEX_API_SECRET"] = t.Config.CexApiSecret
+	t.Environment["CEX_API_KEY"] = t.Config.CexApiKey
+	t.Environment["TEST_MODE"] = fmt.Sprint(t.Config.TestMode)
+	t.Environment["MARGIN"] = t.Config.Margin
+	t.Environment["TEST_CENTRALIZED_EXCHANGE_BASEASSET_BALANCE"] = t.Config.TestCentralizedBaseassetBalance
+	t.Environment["TEST_CENTRALIZED_EXCHANGE_QUOTEASSET_BALANCE"] = t.Config.TestCentralizedQuoteassetBalance
 
 	return nil
 }

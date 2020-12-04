@@ -17,8 +17,7 @@ type ConnextConfig struct {
 type Connext struct {
 	Base
 
-	config  ConnextConfig
-	network string
+	Config ConnextConfig
 }
 
 func newConnext(name string) Connext {
@@ -27,8 +26,8 @@ func newConnext(name string) Connext {
 	}
 }
 
-func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Connext) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
@@ -38,11 +37,11 @@ func (t *Connext) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Connext) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -50,7 +49,6 @@ func (t *Connext) Apply(config *SharedConfig, services map[string]Service) error
 	if network != "simnet" && network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/app/connext-store", config.Network)

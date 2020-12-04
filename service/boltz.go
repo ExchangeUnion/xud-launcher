@@ -12,7 +12,7 @@ type BoltzConfig struct {
 type Boltz struct {
 	Base
 
-	config BoltzConfig
+	Config BoltzConfig
 }
 
 func newBoltz(name string) Boltz {
@@ -21,8 +21,8 @@ func newBoltz(name string) Boltz {
 	}
 }
 
-func (t *Boltz) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Boltz) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
@@ -32,11 +32,11 @@ func (t *Boltz) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Boltz) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 

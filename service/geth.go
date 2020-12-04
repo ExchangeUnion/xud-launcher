@@ -19,8 +19,7 @@ type GethConfig struct {
 type Geth struct {
 	Base
 
-	config  GethConfig
-	network string
+	Config GethConfig
 }
 
 func newGeth(name string) Geth {
@@ -29,12 +28,12 @@ func newGeth(name string) Geth {
 	}
 }
 
-func (t *Geth) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Geth) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &GethConfig{
+	if err := ReflectFlags(t.Name, &t.Config, &GethConfig{
 		Mode:                "light",
 		Rpchost:             "",
 		Rpcport:             0,
@@ -50,11 +49,11 @@ func (t *Geth) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Geth) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -62,7 +61,6 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
 
 	// base apply
 	err := t.Base.Apply("/root/.ethereum", config.Network)
@@ -73,19 +71,19 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 	// geth apply
 	t.Environment["NETWORK"] = network
 
-	if t.config.AncientChaindataDir != "" {
-		volume := fmt.Sprintf("%s:/root/.ethereum-ancient-chaindata", t.config.AncientChaindataDir)
+	if t.Config.AncientChaindataDir != "" {
+		volume := fmt.Sprintf("%s:/root/.ethereum-ancient-chaindata", t.Config.AncientChaindataDir)
 		t.Volumes = append(t.Volumes, volume)
 		t.Environment["CUSTOM_ANCIENT_CHAINDATA"] = "true"
 	}
 
-	if t.config.Cache != "" {
-		t.Command = append(t.Command, fmt.Sprintf("--cache %s", t.config.Cache))
+	if t.Config.Cache != "" {
+		t.Command = append(t.Command, fmt.Sprintf("--cache %s", t.Config.Cache))
 	}
 
 	// TODO select ethProvider in light mode
 
-	if t.config.Mode != "native" || network == "simnet" {
+	if t.Config.Mode != "native" || network == "simnet" {
 		t.Disabled = true
 	}
 
@@ -94,7 +92,7 @@ func (t *Geth) Apply(config *SharedConfig, services map[string]Service) error {
 
 func (t *Geth) ToJson() map[string]interface{} {
 	result := t.Base.ToJson()
-	result["mode"] = t.config.Mode
+	result["mode"] = t.Config.Mode
 
 	rpc := make(map[string]interface{})
 	result["rpc"] = rpc

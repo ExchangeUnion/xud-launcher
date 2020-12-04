@@ -18,8 +18,7 @@ type BitcoindConfig struct {
 type Bitcoind struct {
 	Base
 
-	config  BitcoindConfig
-	network string
+	Config BitcoindConfig
 }
 
 func newBitcoind(name string) Bitcoind {
@@ -28,12 +27,12 @@ func newBitcoind(name string) Bitcoind {
 	}
 }
 
-func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
-	if err := ReflectFlags(t.Name, &t.config, &BitcoindConfig{
+	if err := ReflectFlags(t.Name, &t.Config, &BitcoindConfig{
 		Mode:           "light",
 		Rpchost:        "",
 		Rpcport:        0,
@@ -49,11 +48,11 @@ func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Bitcoind) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 
@@ -61,7 +60,6 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
-	t.network = network
 
 	// base apply
 
@@ -92,7 +90,7 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 		t.Command = append(t.Command, "-rpcport=8332")
 	}
 
-	if t.config.Mode != "native" || network == "simnet" {
+	if t.Config.Mode != "native" || network == "simnet" {
 		t.Disabled = true
 	}
 
@@ -101,13 +99,13 @@ func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) erro
 
 func (t *Bitcoind) ToJson() map[string]interface{} {
 	result := t.Base.ToJson()
-	result["mode"] = t.config.Mode
+	result["mode"] = t.Config.Mode
 
 	rpc := make(map[string]interface{})
 	result["rpc"] = rpc
 	rpc["type"] = "JSON-RPC"
 	rpc["host"] = "bitcoind"
-	if t.network == "testnet" {
+	if t.Network == "testnet" {
 		rpc["port"] = 18332
 	} else {
 		rpc["port"] = 8332

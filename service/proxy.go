@@ -14,7 +14,7 @@ type ProxyConfig struct {
 type Proxy struct {
 	Base
 
-	config ProxyConfig
+	Config ProxyConfig
 }
 
 func newProxy(name string) Proxy {
@@ -23,8 +23,8 @@ func newProxy(name string) Proxy {
 	}
 }
 
-func (t *Proxy) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Proxy) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
@@ -34,11 +34,11 @@ func (t *Proxy) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Proxy) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Proxy) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 

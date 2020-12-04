@@ -12,7 +12,7 @@ type WebuiConfig struct {
 type Webui struct {
 	Base
 
-	config WebuiConfig
+	Config WebuiConfig
 }
 
 func newWebui(name string) Webui {
@@ -21,8 +21,8 @@ func newWebui(name string) Webui {
 	}
 }
 
-func (t *Webui) ConfigureFlags(cmd *cobra.Command) error {
-	if err := t.Base.ConfigureFlags(cmd); err != nil {
+func (t *Webui) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
 		return err
 	}
 
@@ -32,11 +32,11 @@ func (t *Webui) ConfigureFlags(cmd *cobra.Command) error {
 }
 
 func (t *Webui) GetConfig() interface{} {
-	return t.config
+	return t.Config
 }
 
 func (t *Webui) Apply(config *SharedConfig, services map[string]Service) error {
-	ReflectFillConfig(t.Name, &t.config)
+	ReflectFillConfig(t.Name, &t.Config)
 
 	network := config.Network
 

@@ -3,49 +3,17 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
-
-func isValidNetwork(network string) bool {
-	network = strings.TrimSpace(network)
-	network = strings.ToLower(network)
-	for _, item := range validNetworks {
-		if item == network {
-			return true
-		}
-	}
-	return false
-}
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
 	Short: "Cleanup the XUD environment",
-	//ValidArgs: []string{
-	//	"network",
-	//},
-	Args: func(cmd *cobra.Command, args []string) error {
-		//err := cobra.OnlyValidArgs(cmd, args)
-		//if err != nil {
-		//	return err
-		//}
-		if len(args) < 1 {
-			return errors.New("network required")
-		}
-		if !isValidNetwork(args[0]) {
-			return fmt.Errorf("invalid network: %s", args[0])
-		}
-		return nil
-	},
 	Run: func(cmd *cobra.Command, args []string) {
-		network := args[0]
-
 		// get running containers
 		containers := getRunningContainers(network)
 		if len(containers) > 0 {
@@ -70,13 +38,6 @@ var cleanupCmd = &cobra.Command{
 				removeNetwork(n)
 			}
 		}
-
-		home, err := homedir.Dir()
-		if err != nil {
-			logger.Fatal(err)
-		}
-		networkDir := filepath.Join(home, ".xud-docker", network)
-		fmt.Println(networkDir)
 
 		if _, err := os.Stat(networkDir); !os.IsNotExist(err) {
 			fmt.Printf("Do you want to remove all %s data (%s)? [y/N] ", network, networkDir)

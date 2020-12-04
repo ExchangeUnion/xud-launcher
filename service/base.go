@@ -93,6 +93,8 @@ func (t *Base) Apply(dir string, network string) error {
 
 	t.Network = network
 
+	t.Environment["NETWORK"] = network
+
 	return nil
 }
 

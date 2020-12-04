@@ -83,7 +83,29 @@ func initNetwork() string {
 }
 
 func initLogger() *logrus.Entry {
-	logrus.SetLevel(logrus.DebugLevel)
+	lv := os.Getenv("LOG_LEVEL")
+	lv = strings.TrimSpace(lv)
+	lv = strings.ToLower(lv)
+	if lv == "" {
+		logrus.SetLevel(logrus.WarnLevel)
+	} else {
+		switch lv {
+		case "trace":
+			logrus.SetLevel(logrus.TraceLevel)
+		case "debug":
+			logrus.SetLevel(logrus.DebugLevel)
+		case "info":
+			logrus.SetLevel(logrus.InfoLevel)
+		case "warn":
+			logrus.SetLevel(logrus.WarnLevel)
+		case "error":
+			logrus.SetLevel(logrus.ErrorLevel)
+		case "fatal":
+			logrus.SetLevel(logrus.FatalLevel)
+		case "panic":
+			logrus.SetLevel(logrus.PanicLevel)
+		}
+	}
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05.000",

@@ -72,11 +72,15 @@ var setupCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatalf("Failed to write to %s: %s", logfile, err)
 		}
+
 		var lnds = map[string]string{
 			"lndbtc": "0.00% (0/0)",
 			"lndltc": "0.00% (0/0)",
 		}
+		var lndsMutex = &sync.Mutex{}
 		waitLnds(func(service string, status string) {
+			lndsMutex.Lock()
+			defer lndsMutex.Unlock()
 			lnds[service] = status
 			_, err := f.WriteString(fmt.Sprintf(" [LightSync] lndbtc: %s | lndltc: %s\n", lnds["lndbtc"], lnds["lndltc"]))
 			if err != nil {

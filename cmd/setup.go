@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -21,7 +22,7 @@ var (
 )
 
 const (
-	DEFAULT_PASSWORD = "OpenDEX!Rocks"
+	DefaultPassword = "OpenDEX!Rocks"
 )
 
 func init() {
@@ -38,42 +39,73 @@ var setupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
+		logfile := filepath.Join(networkDir, "logs", fmt.Sprintf("%s.log", network))
+		f, err := os.Create(logfile)
+		if err != nil {
+			logger.Fatalf("Failed to create %s: %s", logfile, err)
+		}
+		defer f.Close()
+
 		logger.Debugf("Generate files")
 		err = exec.Command(os.Args[0], "gen").Run()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Failed to generate files: %s", err)
 		}
 
 		logger.Debugf("Starting proxy")
 		err = exec.Command(os.Args[0], "up", "--", "-d", "proxy").Run()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Failed to start proxy: %s", err)
 		}
 
 		logger.Debugf("Starting lndbtc, lndltc and connext")
 		err = exec.Command(os.Args[0], "up", "--", "-d", "lndbtc", "lndltc", "connext").Run()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Failed to start lndbtc, lndltc and connext: %s", err)
 		}
 
+		// FIXME enable tls verification
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 		logger.Debugf("Waiting for LNDs to be synced")
-		waitLnds()
+		_, err = f.WriteString("Waiting for XUD dependencies to be ready\n")
+		if err != nil {
+			logger.Fatalf("Failed to write to %s: %s", logfile, err)
+		}
+		var lnds = map[string]string{
+			"lndbtc": "0.00% (0/0)",
+			"lndltc": "0.00% (0/0)",
+		}
+		waitLnds(func(service string, status string) {
+			lnds[service] = status
+			_, err := f.WriteString(fmt.Sprintf(" [LightSync] lndbtc: %s | lndltc: %s\n", lnds["lndbtc"], lnds["lndltc"]))
+			if err != nil {
+				logger.Fatalf("Failed to write to %s: %s", logfile, err)
+			}
+		})
 
 		logger.Debugf("Starting xud")
 		err = exec.Command(os.Args[0], "up", "--", "-d", "xud").Run()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Failed to start xud: %s", err)
 		}
 
 		logger.Debugf("Ensuring wallets are created and unlocked")
+		_, err = f.WriteString("Setup wallets\n")
+		if err != nil {
+			logger.Fatalf("Failed to write to %s: %s", logfile, err)
+		}
 		ensureWallets()
 
 		logger.Debugf("Starting boltz")
 		err = exec.Command(os.Args[0], "up", "--", "-d", "boltz").Run()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Failed to start boltz: %s", err)
+		}
+
+		_, err = f.WriteString("Start shell\n")
+		if err != nil {
+			logger.Fatalf("Failed to write to %s: %s", logfile, err)
 		}
 	},
 }
@@ -98,27 +130,32 @@ func getServiceStatus(name string) string {
 	return r.Status
 }
 
-func waitLnds() {
+func waitLnds(onChange func(service string, status string)) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
-		waitLnd("lndbtc")
+		waitLnd("lndbtc", func(status string) {
+			onChange("lndbtc", status)
+		})
 		wg.Done()
 	}()
 
 	go func() {
-		waitLnd("lndltc")
+		waitLnd("lndltc", func(status string) {
+			onChange("lndltc", status)
+		})
 		wg.Done()
 	}()
 
 	wg.Wait()
 }
 
-func waitLnd(name string) {
+func waitLnd(name string, onChange func(status string)) {
 	for {
 		status := getServiceStatus(name)
 		logger.Debugf("%s: %s", name, status)
+		onChange(status)
 		if strings.Contains(status, "100.00%") {
 			break
 		}
@@ -128,10 +165,13 @@ func waitLnd(name string) {
 
 func ensureWallets() {
 	status := getServiceStatus("xud")
+	logger.Debugf("xud: %s", status)
 	if strings.Contains(status, "Wallet missing") {
-		create(DEFAULT_PASSWORD)
+		logger.Debug("Creating wallets")
+		create(DefaultPassword)
 	} else if strings.Contains(status, "Wallet locked") {
-		unlock(DEFAULT_PASSWORD)
+		logger.Debug("Unlocking wallets")
+		unlock(DefaultPassword)
 	}
 }
 

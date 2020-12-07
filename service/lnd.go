@@ -172,7 +172,7 @@ func (t *Lnd) ToJson() map[string]interface{} {
 	case "litecoin":
 		name = "lndltc"
 	}
-	rpc["host"] = "bitcoind"
+	rpc["host"] = name
 	rpc["port"] = 10009
 	rpc["tlsCert"] = fmt.Sprintf("%s/%s/tls.cert", PROXY_DATA_DIR, name)
 	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/chain/%s/%s/readonly.macaroon", PROXY_DATA_DIR, name, t.Chain, t.Network)

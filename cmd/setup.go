@@ -159,6 +159,9 @@ func waitLnd(name string, onChange func(status string)) {
 		if strings.Contains(status, "100.00%") {
 			break
 		}
+		if strings.Contains(status, "99.99%") {
+			break
+		}
 		time.Sleep(1 * time.Second)
 	}
 }

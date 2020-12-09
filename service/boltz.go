@@ -57,6 +57,11 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 		t.Disabled = true
 	}
 
+	t.Volumes = append(t.Volumes,
+		"./data/lndbtc:/root/.lndbtc",
+		"./data/lndltc:/root/.lndltc",
+	)
+
 	return nil
 }
 

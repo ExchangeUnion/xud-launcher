@@ -14,6 +14,7 @@ func init() {
 	rootCmd.AddCommand(restartCmd)
 	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(execCmd)
+	rootCmd.AddCommand(pullCmd)
 }
 
 var upCmd = &cobra.Command{
@@ -139,6 +140,25 @@ var execCmd = &cobra.Command{
 			logger.Fatal(err)
 		}
 		args = append([]string{"exec"}, args...)
+		c := exec.Command("docker-compose", args...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		err = c.Run()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	},
+}
+
+var pullCmd = &cobra.Command{
+	Use:   "pull",
+	Short: "A docker-compose pull wrapper",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := os.Chdir(networkDir)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		args = append([]string{"pull"}, args...)
 		c := exec.Command("docker-compose", args...)
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr

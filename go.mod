@@ -3,6 +3,7 @@ module github.com/ExchangeUnion/xud-launcher
 go 1.15
 
 require (
+	github.com/fatih/color v1.10.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/iancoleman/strcase v0.1.2
 	github.com/magiconair/properties v1.8.4 // indirect

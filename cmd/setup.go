@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
@@ -33,6 +34,20 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 }
 
+func runCommand(name string, args ...string) {
+	c := exec.Command(name, args...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+
+	color.Blue(c.String())
+	err := c.Run()
+	if err != nil {
+		fmt.Printf("🐞 %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Println()
+}
+
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Bring up your XUD environment in one command",
@@ -46,23 +61,19 @@ var setupCmd = &cobra.Command{
 		}
 		defer f.Close()
 
+		launcher := os.Args[0]
+
 		logger.Debugf("Generate files")
-		err = exec.Command(os.Args[0], "gen").Run()
-		if err != nil {
-			logger.Fatalf("Failed to generate files: %s", err)
-		}
+		runCommand(launcher, "gen")
+
+		logger.Debugf("Pulling images")
+		runCommand(launcher, "pull")
 
 		logger.Debugf("Starting proxy")
-		err = exec.Command(os.Args[0], "up", "--", "-d", "proxy").Run()
-		if err != nil {
-			logger.Fatalf("Failed to start proxy: %s", err)
-		}
+		runCommand(launcher, "up", "--", "-d", "proxy")
 
 		logger.Debugf("Starting lndbtc, lndltc and connext")
-		err = exec.Command(os.Args[0], "up", "--", "-d", "lndbtc", "lndltc", "connext").Run()
-		if err != nil {
-			logger.Fatalf("Failed to start lndbtc, lndltc and connext: %s", err)
-		}
+		runCommand(launcher, "up", "--", "-d", "lndbtc", "lndltc", "connext")
 
 		// FIXME enable tls verification
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -89,10 +100,7 @@ var setupCmd = &cobra.Command{
 		})
 
 		logger.Debugf("Starting xud")
-		err = exec.Command(os.Args[0], "up", "--", "-d", "xud").Run()
-		if err != nil {
-			logger.Fatalf("Failed to start xud: %s", err)
-		}
+		runCommand(launcher, "up", "--", "-d", "xud")
 
 		logger.Debugf("Ensuring wallets are created and unlocked")
 		_, err = f.WriteString("Setup wallets\n")
@@ -102,10 +110,7 @@ var setupCmd = &cobra.Command{
 		ensureWallets()
 
 		logger.Debugf("Starting boltz")
-		err = exec.Command(os.Args[0], "up", "--", "-d", "boltz").Run()
-		if err != nil {
-			logger.Fatalf("Failed to start boltz: %s", err)
-		}
+		runCommand(launcher, "up", "--", "-d", "boltz")
 
 		_, err = f.WriteString("Start shell\n")
 		if err != nil {

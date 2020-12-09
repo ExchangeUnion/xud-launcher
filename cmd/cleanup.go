@@ -126,9 +126,8 @@ func removeNetwork(id string) {
 }
 
 func removeDir(path string) {
-	fmt.Println(path)
-	err := exec.Command("sudo", "rm", "-rf", path).Run()
+	err := os.RemoveAll(path)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("Failed to remove %s: %s", path, err)
 	}
 }

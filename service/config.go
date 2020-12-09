@@ -8,7 +8,7 @@ var (
 			"connext": "connextproject/vector_node:837bafa1",
 			"arby":    "exchangeunion/arby:latest",
 			"webui":   "exchangeunion/webui:latest",
-			"proxy":   "exchangeunion/proxy:latest__proxy-first",
+			"proxy":   "exchangeunion/proxy:latest__proxy-first-fix",
 			"xud":     "exchangeunion/xud:latest",
 		},
 		"testnet": {
@@ -21,7 +21,7 @@ var (
 			"arby":      "exchangeunion/arby:latest",
 			"boltz":     "exchangeunion/boltz:latest",
 			"webui":     "exchangeunion/webui:latest",
-			"proxy":     "exchangeunion/proxy:latest__proxy-first",
+			"proxy":     "exchangeunion/proxy:latest__proxy-first-fix",
 			"xud":       "exchangeunion/xud:latest",
 		},
 		"mainnet": {
@@ -34,7 +34,7 @@ var (
 			"arby":      "exchangeunion/arby:1.3.0",
 			"boltz":     "exchangeunion/boltz:1.1.1",
 			"webui":     "exchangeunion/webui:1.0.0",
-			"proxy":     "exchangeunion/proxy:latest__proxy-first",
+			"proxy":     "exchangeunion/proxy:latest__proxy-first-fix",
 			"xud":       "exchangeunion/xud:1.2.0",
 		},
 	}

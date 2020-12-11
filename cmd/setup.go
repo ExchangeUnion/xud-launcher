@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -179,35 +180,84 @@ func waitLnd(name string, onChange func(status string)) {
 }
 
 func ensureWallets() {
-	status := getServiceStatus("xud")
-	logger.Debugf("xud: %s", status)
-	if strings.Contains(status, "Wallet missing") {
-		logger.Debug("Creating wallets")
-		create(DefaultPassword)
-	} else if strings.Contains(status, "Wallet locked") {
-		logger.Debug("Unlocking wallets")
-		unlock(DefaultPassword)
+	var i = 0
+	for ; i < 10; i++ {
+		status := getServiceStatus("xud")
+		logger.Debugf("xud: %s", status)
+		if strings.Contains(status, "Wallet missing") {
+			logger.Debug("Creating wallets")
+			err := create(DefaultPassword)
+			if err != nil {
+				logger.Fatalf("Failed to create wallets: %s", err)
+			}
+			break
+		} else if strings.Contains(status, "Wallet locked") {
+			logger.Debug("Unlocking wallets")
+			err := unlock(DefaultPassword)
+			if err != nil {
+				logger.Fatalf("Failed to unlock wallets: %s", err)
+			}
+			break
+		} else if strings.HasPrefix(status, "Error:") {
+			logger.Debug("Xud is not ready yet")
+			time.Sleep(3 * time.Second)
+		} else {
+			break
+		}
+	}
+	if i >= 10 {
+		logger.Fatal("It's too long to wait Xud to be ready. There must be something wrong.")
 	}
 }
 
-func create(password string) {
+func create(password string) error {
 	var payload = []byte(`{"password":"` + password + `"}`)
 	resp, err := http.Post("https://localhost:8889/api/v1/xud/create", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("Failed to send HTTP request: %s", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s\n", string(body))
+	if err != nil {
+		logger.Fatalf("Failed to read HTTP response body: %s", err)
+	}
+	if resp.StatusCode == http.StatusOK {
+		fmt.Printf("%s\n", string(body))
+	} else {
+		var payload Error
+		err = json.Unmarshal(body, &payload)
+		if err != nil {
+			logger.Fatalf("Failed to unmarshal JSON from HTTP response body: %s", err)
+		}
+		return errors.New(payload.Message)
+	}
+	return nil
 }
 
-func unlock(password string) {
+func unlock(password string) error {
 	var payload = []byte(`{"password":"` + password + `"}`)
 	resp, err := http.Post("https://localhost:8889/api/v1/xud/unlock", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("Failed to send HTTP request: %s", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s\n", string(body))
+	if err != nil {
+		logger.Fatalf("Failed to read HTTP response body: %s", err)
+	}
+	if resp.StatusCode == http.StatusOK {
+		fmt.Printf("%s\n", string(body))
+	} else {
+		var payload Error
+		err = json.Unmarshal(body, &payload)
+		if err != nil {
+			logger.Fatalf("Failed to unmarshal JSON from HTTP response body: %s", err)
+		}
+		return errors.New(payload.Message)
+	}
+	return nil
+}
+
+type Error struct {
+	Message string `json:"message"`
 }

@@ -65,13 +65,8 @@ func newBase(name string) Base {
 	}
 }
 
-func (t *Base) ConfigureFlags(cmd *cobra.Command, network string) error {
-	if err := ReflectFlags(t.Name, &t.Config, &BaseConfig{
-		Disabled:    false,
-		ExposePorts: []string{},
-		Dir:         fmt.Sprintf("./data/%s", t.Name),
-		Image:       images[network][t.Name],
-	}, cmd); err != nil {
+func (t *Base) ConfigureFlags(cmd *cobra.Command, network string, defaultValues *BaseConfig) error {
+	if err := ReflectFlags(t.Name, &t.Config, defaultValues, cmd); err != nil {
 		return err
 	}
 	return nil

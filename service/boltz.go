@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +23,12 @@ func newBoltz(name string) Boltz {
 }
 
 func (t *Boltz) ConfigureFlags(cmd *cobra.Command, network string) error {
-	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, network, &BaseConfig{
+		Disabled:    network == "simnet",
+		ExposePorts: []string{},
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
+	}); err != nil {
 		return err
 	}
 
@@ -52,10 +58,6 @@ func (t *Boltz) Apply(config *SharedConfig, services map[string]Service) error {
 	}
 
 	// boltz apply
-
-	if network == "simnet" {
-		t.Disabled = true
-	}
 
 	t.Volumes = append(t.Volumes,
 		"./data/lndbtc:/root/.lndbtc",

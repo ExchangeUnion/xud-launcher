@@ -27,7 +27,12 @@ func newLnd(name string, chain string) Lnd {
 }
 
 func (t *Lnd) ConfigureFlags(cmd *cobra.Command, network string) error {
-	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, network, &BaseConfig{
+		Disabled:    false,
+		ExposePorts: []string{},
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
+	}); err != nil {
 		return err
 	}
 

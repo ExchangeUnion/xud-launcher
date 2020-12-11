@@ -34,7 +34,12 @@ func newArby(name string) Arby {
 }
 
 func (t *Arby) ConfigureFlags(cmd *cobra.Command, network string) error {
-	if err := t.Base.ConfigureFlags(cmd, network); err != nil {
+	if err := t.Base.ConfigureFlags(cmd, network, &BaseConfig{
+		Disabled:    true,
+		ExposePorts: []string{},
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
+	}); err != nil {
 		return err
 	}
 

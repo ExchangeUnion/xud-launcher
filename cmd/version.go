@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/ExchangeUnion/xud-launcher/build"
 	"github.com/spf13/cobra"
 )
 
@@ -12,9 +12,13 @@ func init() {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of xud-launcher",
-	Long:  `...`,
+	Short: "Show the launcher version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("v1.0.0-commit")
+		fmt.Println(GetVersion())
 	},
+}
+
+func GetVersion() string {
+	var version = fmt.Sprintf("%s-%s", build.Version, build.GitCommit[:7])
+	return version
 }

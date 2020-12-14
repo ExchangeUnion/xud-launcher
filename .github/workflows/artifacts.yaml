@@ -31,7 +31,9 @@ jobs:
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.architecture }} make build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.os }}-${{ matrix.architecture }}
-          path: xud-launcher*
+          path: |
+            xud-launcher
+            xud-launcher.exe

@@ -24,6 +24,6 @@ default: build
 #
 
 build:
-	$(GOBUILD) -o xud-launcher $(LDFLAGS)
+	$(GOBUILD) $(LDFLAGS)
 
 .PHONY: build

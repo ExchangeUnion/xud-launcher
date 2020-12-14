@@ -2,56 +2,79 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
 type BitcoindConfig struct {
-	BaseConfig
-
-	Mode           string
-	Rpchost        string
-	Rpcport        uint16
-	Rpcuser        string
-	Rpcpass        string
-	Zmqpubrawblock string
-	Zmqpubrawtx    string
+	Mode           string `usage:"Bitcoind service mode"`
+	Rpchost        string `usage:"External bitcoind RPC hostname"`
+	Rpcport        uint16 `usage:"External bitcoind RPC port"`
+	Rpcuser        string `usage:"External bitcoind RPC username"`
+	Rpcpass        string `usage:"External bitcoind RPC password"`
+	Zmqpubrawblock string `usage:"External bitcoind ZeroMQ raw blocks publication address"`
+	Zmqpubrawtx    string `usage:"External bitcoind ZeroMQ raw transactions publication address"`
 }
 
 type Bitcoind struct {
 	Base
 
-	config BitcoindConfig
+	Config BitcoindConfig
 }
 
-func NewBitcoind() Bitcoind {
+func newBitcoind(name string) Bitcoind {
 	return Bitcoind{
-		config: BitcoindConfig{},
+		Base: newBase(name),
 	}
 }
 
-func (t Bitcoind) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("bitcoind", &t.config.BaseConfig, cmd)
-	if err != nil {
+func (t *Bitcoind) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network, &BaseConfig{
+		Disabled:    true,
+		ExposePorts: []string{},
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
+	}); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().StringVar(&t.config.Mode, "bitcoind.mode", "light", "Bitcoind service mode")
-	cmd.PersistentFlags().StringVar(&t.config.Rpchost, "bitcoind.rpchost", "", "External bitcoind RPC hostname")
-	cmd.PersistentFlags().Uint16Var(&t.config.Rpcport, "bitcoind.rpcport", 0, "External bitcoind RPC port")
-	cmd.PersistentFlags().StringVar(&t.config.Rpcuser, "bitcoind.rpcuser", "", "External bitcoind RPC username")
-	cmd.PersistentFlags().StringVar(&t.config.Rpcpass, "bitcoind.rpcpass", "", "External bitcoind RPC password")
-	cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawblock, "bitcoind.zmqpubrawblock", "", "External bitcoind ZeroMQ raw blocks publication address")
-	cmd.PersistentFlags().StringVar(&t.config.Zmqpubrawtx, "bitcoind.zmqpubrawtx", "", "External bitcoind ZeroMQ raw transactions publication address")
+	if err := ReflectFlags(t.Name, &t.Config, &BitcoindConfig{
+		Mode:           "light",
+		Rpchost:        "",
+		Rpcport:        0,
+		Rpcuser:        "",
+		Rpcpass:        "",
+		Zmqpubrawblock: "",
+		Zmqpubrawtx:    "",
+	}, cmd); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (t Bitcoind) Apply(network string) error {
+func (t *Bitcoind) GetConfig() interface{} {
+	return t.Config
+}
 
+func (t *Bitcoind) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.Config)
+
+	network := config.Network
+
+	// validation
 	if network != "testnet" && network != "mainnet" {
 		return errors.New("invalid network: " + network)
 	}
 
+	// base apply
+
+	err := t.Base.Apply("/root/.bitcoind", config.Network)
+	if err != nil {
+		return err
+	}
+
+	// bitcoind apply
 	t.Environment["NETWORK"] = network
 
 	t.Command = append(t.Command,
@@ -73,5 +96,28 @@ func (t Bitcoind) Apply(network string) error {
 		t.Command = append(t.Command, "-rpcport=8332")
 	}
 
+	if t.Config.Mode != "native" || network == "simnet" {
+		t.Disabled = true
+	}
+
 	return nil
+}
+
+func (t *Bitcoind) ToJson() map[string]interface{} {
+	result := t.Base.ToJson()
+	result["mode"] = t.Config.Mode
+
+	rpc := make(map[string]interface{})
+	result["rpc"] = rpc
+	rpc["type"] = "JSON-RPC"
+	rpc["host"] = "bitcoind"
+	if t.Network == "testnet" {
+		rpc["port"] = 18332
+	} else {
+		rpc["port"] = 8332
+	}
+	rpc["username"] = "xu"
+	rpc["password"] = "xu"
+
+	return result
 }

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 )
@@ -12,9 +12,8 @@ func init() {
 
 var consoleCmd = &cobra.Command{
 	Use:   "console",
-	Short: "Start the xud-ctl console",
-	Long:  `...`,
+	Short: "Open your native console with some useful commands for xud-docker",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Starting...")
+		exec.Command("/bin/bash")
 	},
 }

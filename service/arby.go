@@ -7,62 +7,87 @@ import (
 )
 
 type ArbyConfig struct {
-	BaseConfig
-
-	LiveCex                          bool
-	TestMode                         bool
-	BaseAsset                        string
-	QuoteAsset                       string
-	CexBaseAsset                     string
-	CexQuoteAsset                    string
-	TestCentralizedBaseassetBalance  string
-	TestCentralizedQuoteassetBalance string
-	Cex                              string
-	CexApiKey                        string
-	CexApiSecret                     string
-	Margin                           string
+	LiveCex                          bool   `usage:"Live CEX (deprecated)"`
+	TestMode                         bool   `usage:"Whether to issue real orders on the centralized exchange"`
+	BaseAsset                        string `usage:"Base asset"`
+	QuoteAsset                       string `usage:"Quote asset"`
+	CexBaseAsset                     string `usage:"Centralized exchange base asset"`
+	CexQuoteAsset                    string `usage:"Centralized exchange quote asset"`
+	TestCentralizedBaseassetBalance  string `usage:"Test centralized base asset balance"`
+	TestCentralizedQuoteassetBalance string `usage:"Test centralized quote asset balance"`
+	Cex                              string `usage:"Centralized Exchange"`
+	CexApiKey                        string `usage:"CEX API key"`
+	CexApiSecret                     string `usage:"CEX API secret"`
+	Margin                           string `usage:"Trade margin"`
 }
 
 type Arby struct {
 	Base
 
-	config ArbyConfig
+	Config ArbyConfig
 }
 
-func NewArby() Arby {
+func newArby(name string) Arby {
 	return Arby{
-		config: ArbyConfig{},
+		Base: newBase(name),
 	}
 }
 
-func (t Arby) ConfigureFlags(cmd *cobra.Command) error {
-	err := configureCommonFlags("arby", &t.config.BaseConfig, cmd)
-	if err != nil {
+func (t *Arby) ConfigureFlags(cmd *cobra.Command, network string) error {
+	if err := t.Base.ConfigureFlags(cmd, network, &BaseConfig{
+		Disabled:    true,
+		ExposePorts: []string{},
+		Dir:         fmt.Sprintf("./data/%s", t.Name),
+		Image:       images[network][t.Name],
+	}); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().BoolVar(&t.config.LiveCex, "arby.live-cex", true, "Live CEX (deprecated)")
-	err = cmd.PersistentFlags().MarkDeprecated("arby.live-cex", "Please use --arby.test-mode instead")
-	if err != nil {
+	if err := ReflectFlags(t.Name, &t.Config, &ArbyConfig{
+		LiveCex:                          true,
+		TestMode:                         true,
+		BaseAsset:                        "",
+		QuoteAsset:                       "",
+		CexBaseAsset:                     "",
+		CexQuoteAsset:                    "",
+		TestCentralizedBaseassetBalance:  "",
+		TestCentralizedQuoteassetBalance: "",
+		Cex:                              "binance",
+		CexApiKey:                        "123",
+		CexApiSecret:                     "abc",
+		Margin:                           "0.04",
+	}, cmd); err != nil {
 		return err
 	}
-	cmd.PersistentFlags().BoolVar(&t.config.TestMode, "arby.test-mode", true, "Whether to issue real orders on the centralized exchange")
-	cmd.PersistentFlags().StringVar(&t.config.BaseAsset, "arby.base-asset", "", "Base asset")
-	cmd.PersistentFlags().StringVar(&t.config.QuoteAsset, "arby.quote-asset", "", "Quote asset")
-	cmd.PersistentFlags().StringVar(&t.config.CexBaseAsset, "arby.cex-base-asset", "", "Centralized exchange base asset")
-	cmd.PersistentFlags().StringVar(&t.config.CexQuoteAsset, "arby.cex-quote-asset", "", "Centralized exchange quote asset")
-	cmd.PersistentFlags().StringVar(&t.config.TestCentralizedBaseassetBalance, "arby.test-centralized-baseasset-balance", "", "Test centralized base asset balance")
-	cmd.PersistentFlags().StringVar(&t.config.TestCentralizedQuoteassetBalance, "arby.test-centralized-quoteasset-balance", "", "Test centralized quote asset balance")
-	cmd.PersistentFlags().StringVar(&t.config.Cex, "arby.cex", "binance", "Centralized Exchange")
-	cmd.PersistentFlags().StringVar(&t.config.CexApiKey, "arby.cex-api-key", "123", "CEX API key")
-	cmd.PersistentFlags().StringVar(&t.config.CexApiSecret, "arby.cex-api-secret", "abc", "CEX API secret")
-	cmd.PersistentFlags().StringVar(&t.config.Margin, "arby.margin", "0.04", "Trade margin")
+
+	if err := cmd.PersistentFlags().MarkDeprecated("arby.live-cex", "Please use --arby.test-mode instead"); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (t Arby) Apply(network string, services map[string]Service) error {
+func (t *Arby) GetConfig() interface{} {
+	return t.Config
+}
 
+func (t *Arby) Apply(config *SharedConfig, services map[string]Service) error {
+	ReflectFillConfig(t.Name, &t.Config)
+
+	network := config.Network
+
+	// validation
+	if network != "simnet" && network != "testnet" && network != "mainnet" {
+		return errors.New("invalid network: " + network)
+	}
+
+	// base apply
+	err := t.Base.Apply("/root/.arby", config.Network)
+	if err != nil {
+		return err
+	}
+
+	// arby apply
 	var rpcPort string
 
 	t.Environment["NETWORK"] = network
@@ -82,18 +107,18 @@ func (t Arby) Apply(network string, services map[string]Service) error {
 	t.Environment["DATA_DIR"] = "/root/.arby"
 	t.Environment["OPENDEX_CERT_PATH"] = "/root/.xud/tls.cert"
 	t.Environment["OPENDEX_RPC_HOST"] = "xud"
-	t.Environment["BASEASSET"] = t.config.BaseAsset
-	t.Environment["QUOTEASSET"] = t.config.QuoteAsset
-	t.Environment["CEX_BASEASSET"] = t.config.CexBaseAsset
-	t.Environment["CEX_QUOTEASSET"] = t.config.CexQuoteAsset
+	t.Environment["BASEASSET"] = t.Config.BaseAsset
+	t.Environment["QUOTEASSET"] = t.Config.QuoteAsset
+	t.Environment["CEX_BASEASSET"] = t.Config.CexBaseAsset
+	t.Environment["CEX_QUOTEASSET"] = t.Config.CexQuoteAsset
 	t.Environment["OPENDEX_RPC_PORT"] = rpcPort
-	t.Environment["CEX"] = t.config.Cex
-	t.Environment["CEX_API_SECRET"] = t.config.CexApiSecret
-	t.Environment["CEX_API_KEY"] = t.config.CexApiKey
-	t.Environment["TEST_MODE"] = fmt.Sprint(t.config.TestMode)
-	t.Environment["MARGIN"] = t.config.Margin
-	t.Environment["TEST_CENTRALIZED_EXCHANGE_BASEASSET_BALANCE"] = t.config.TestCentralizedBaseassetBalance
-	t.Environment["TEST_CENTRALIZED_EXCHANGE_QUOTEASSET_BALANCE"] = t.config.TestCentralizedQuoteassetBalance
+	t.Environment["CEX"] = t.Config.Cex
+	t.Environment["CEX_API_SECRET"] = t.Config.CexApiSecret
+	t.Environment["CEX_API_KEY"] = t.Config.CexApiKey
+	t.Environment["TEST_MODE"] = fmt.Sprint(t.Config.TestMode)
+	t.Environment["MARGIN"] = t.Config.Margin
+	t.Environment["TEST_CENTRALIZED_EXCHANGE_BASEASSET_BALANCE"] = t.Config.TestCentralizedBaseassetBalance
+	t.Environment["TEST_CENTRALIZED_EXCHANGE_QUOTEASSET_BALANCE"] = t.Config.TestCentralizedQuoteassetBalance
 
 	return nil
 }

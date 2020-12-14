@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/reliveyy/xud-launcher/cmd"
+	"github.com/ExchangeUnion/xud-launcher/cmd"
 	"log"
 )
 

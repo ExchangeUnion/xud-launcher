@@ -1,11 +1,13 @@
 name: Artifacts
 
 on:
-  push
+  push:
+    tags:
+      - v*
 
 jobs:
   build:
-    name: Build binaries
+    name: Build artifacts
     strategy:
       matrix:
         platform: [ ubuntu-latest ]

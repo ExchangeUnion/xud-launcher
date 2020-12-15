@@ -78,14 +78,14 @@ func (t *Boltz) ToJson() map[string]interface{} {
 	bitcoin["host"] = "boltz"
 	bitcoin["port"] = 9002
 	bitcoin["tlsCert"] = fmt.Sprintf("%s/%s/bitcoin/tls.cert", PROXY_DATA_DIR, t.GetName())
-	bitcoin["macaroon"] = fmt.Sprintf("%s/%s/bitcoin/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
+	bitcoin["macaroon"] = fmt.Sprintf("%s/%s/bitcoin/admin.macaroon", PROXY_DATA_DIR, t.GetName())
 
 	litecoin := make(map[string]interface{})
 	litecoin["type"] = "gRPC"
 	litecoin["host"] = "boltz"
-	litecoin["port"] = 9003
+	litecoin["port"] = 9102
 	litecoin["tlsCert"] = fmt.Sprintf("%s/%s/litecoin/tls.cert", PROXY_DATA_DIR, t.GetName())
-	litecoin["macaroon"] = fmt.Sprintf("%s/%s/litecoin/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
+	litecoin["macaroon"] = fmt.Sprintf("%s/%s/litecoin/admin.macaroon", PROXY_DATA_DIR, t.GetName())
 
 	rpc["bitcoin"] = bitcoin
 	rpc["litecoin"] = litecoin

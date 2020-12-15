@@ -32,7 +32,7 @@ var (
 			"lndltc":    "exchangeunion/lndltc:0.11.0-beta.rc1",
 			"connext":   "exchangeunion/connext:1.3.6",
 			"arby":      "exchangeunion/arby:1.3.0",
-			"boltz":     "exchangeunion/boltz:1.1.2",
+			"boltz":     "exchangeunion/boltz:1.2.0",
 			"webui":     "exchangeunion/webui:1.0.0",
 			"proxy":     "exchangeunion/proxy:latest__proxy-first-fix",
 			"xud":       "exchangeunion/xud:1.2.0",

@@ -76,6 +76,8 @@ func (t *Boltz) ToJson() map[string]interface{} {
 	rpc["host"] = "boltz"
 	rpc["btcPort"] = 9002
 	rpc["ltcPort"] = 9003
+	rpc["tlsCert"] = fmt.Sprintf("%s/%s/tls.cert", PROXY_DATA_DIR, t.GetName())
+	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
 
 	return result
 }

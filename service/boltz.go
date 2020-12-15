@@ -72,12 +72,23 @@ func (t *Boltz) ToJson() map[string]interface{} {
 
 	rpc := make(map[string]interface{})
 	result["rpc"] = rpc
-	rpc["type"] = "gRPC"
-	rpc["host"] = "boltz"
-	rpc["btcPort"] = 9002
-	rpc["ltcPort"] = 9003
-	rpc["tlsCert"] = fmt.Sprintf("%s/%s/tls.cert", PROXY_DATA_DIR, t.GetName())
-	rpc["macaroon"] = fmt.Sprintf("%s/%s/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
+
+	bitcoin := make(map[string]interface{})
+	bitcoin["type"] = "gRPC"
+	bitcoin["host"] = "boltz"
+	bitcoin["port"] = 9002
+	bitcoin["tlsCert"] = fmt.Sprintf("%s/%s/bitcoin/tls.cert", PROXY_DATA_DIR, t.GetName())
+	bitcoin["macaroon"] = fmt.Sprintf("%s/%s/bitcoin/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
+
+	litecoin := make(map[string]interface{})
+	litecoin["type"] = "gRPC"
+	litecoin["host"] = "boltz"
+	litecoin["port"] = 9003
+	litecoin["tlsCert"] = fmt.Sprintf("%s/%s/litecoin/tls.cert", PROXY_DATA_DIR, t.GetName())
+	litecoin["macaroon"] = fmt.Sprintf("%s/%s/litecoin/data/admin.macaroon", PROXY_DATA_DIR, t.GetName())
+
+	rpc["bitcoin"] = bitcoin
+	rpc["litecoin"] = litecoin
 
 	return result
 }

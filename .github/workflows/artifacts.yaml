@@ -29,6 +29,9 @@ jobs:
       - name: Fetch dependencies
         run: go mod vendor
 
+      - name: Get the version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
       - name: Build
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.architecture }} make build
 

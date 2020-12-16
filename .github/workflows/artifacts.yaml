@@ -29,8 +29,12 @@ jobs:
       - name: Fetch dependencies
         run: go mod vendor
 
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
       - name: Build
-        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.architecture }} make build
+        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.architecture }} make VERSION=${{ steps.get_version.outputs.VERSION }} build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2

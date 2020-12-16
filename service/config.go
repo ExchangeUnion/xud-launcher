@@ -35,7 +35,7 @@ var (
 			"boltz":     "exchangeunion/boltz:1.2.0",
 			"webui":     "exchangeunion/webui:1.0.0",
 			"proxy":     "exchangeunion/proxy:1.2.0",
-			"xud":       "exchangeunion/xud:1.2.0",
+			"xud":       "exchangeunion/xud:1.2.4",
 		},
 	}
 

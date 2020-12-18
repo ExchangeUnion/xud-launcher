@@ -19,7 +19,7 @@ var infoCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Launcher Version: %s\n", GetVersion())
 		fmt.Printf("Built At: %s\n", GetBuildTime())
-		fmt.Printf("XUD-Docker Version: 20.12.07\n")
+		fmt.Printf("XUD-Docker Version: 20.12.18-01\n")
 		fmt.Printf("Network: %s\n", network)
 		fmt.Printf("Network Directory: %s\n", networkDir)
 	},

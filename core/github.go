@@ -163,9 +163,11 @@ func (t *GitHub) DownloadLatestBinary(branch string, commit string) error {
 		t.Logger.Debugf("Download launcher.zip from %s", url)
 	}
 
-	err = os.Mkdir(commit, 0755)
-	if err != nil {
-		return fmt.Errorf("mkdir: %w", err)
+	if _, err := os.Stat(commit); os.IsNotExist(err) {
+		err = os.Mkdir(commit, 0755)
+		if err != nil {
+			return fmt.Errorf("create commit (%s) folder: %w", commit, err)
+		}
 	}
 
 	err = os.Chdir(commit)

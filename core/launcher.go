@@ -26,7 +26,12 @@ type Launcher struct {
 
 func NewLauncher(homeDir string) (*Launcher, error) {
 	configFile := filepath.Join(homeDir, "xud-docker.conf")
-	cfg, err := config.ParseConfig(configFile)
+	f, err := os.Open(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("open: %w", err)
+	}
+	defer f.Close()
+	cfg, err := config.ParseConfig(f)
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
@@ -93,7 +98,14 @@ func (t *Launcher) Start(branch string, network string, networkDir string, args 
 		return fmt.Errorf("chdir: %w", err)
 	}
 
-	if _, err := os.Stat(commit); os.IsNotExist(err) {
+	var commitLauncher string
+	if runtime.GOOS == "windows" {
+		commitLauncher = filepath.Join(commit, "launcher.exe")
+	} else {
+		commitLauncher = filepath.Join(commit, "launcher")
+	}
+
+	if _, err := os.Stat(commitLauncher); os.IsNotExist(err) {
 		if err := t.GitHub.DownloadLatestBinary(branch, commit); err != nil {
 			return fmt.Errorf("download latest binary: %w", err)
 		}
@@ -117,7 +129,9 @@ func (t *Launcher) Start(branch string, network string, networkDir string, args 
 
 	} else {
 		launcher = "./launcher"
+	}
 
+	if runtime.GOOS != "windows" {
 		// check if binary launcher is executable
 		info, _ := os.Stat(launcher)
 		mode := info.Mode()
@@ -130,6 +144,9 @@ func (t *Launcher) Start(branch string, network string, networkDir string, args 
 	}
 
 	if err := t.Run(launcher, args[1:]...); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			os.Exit(exitErr.ExitCode())
+		}
 		return fmt.Errorf("run: %w", err)
 	}
 

@@ -16,7 +16,7 @@ type Launcher struct {
 	logger *logrus.Entry
 
 	homeDir     string
-	runtimeDir  string
+	launcherDir string
 	versionsDir string
 
 	configFile string
@@ -26,25 +26,20 @@ type Launcher struct {
 
 func NewLauncher(homeDir string) (*Launcher, error) {
 	configFile := filepath.Join(homeDir, "xud-docker.conf")
-	f, err := os.Open(configFile)
+	cfg, err := initConfig(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("open: %w", err)
-	}
-	defer f.Close()
-	cfg, err := config.ParseConfig(f)
-	if err != nil {
-		return nil, fmt.Errorf("parse config: %w", err)
+		return nil, err
 	}
 
-	runtimeDir := filepath.Join(homeDir, "launcher")
-	versionsDir := filepath.Join(runtimeDir, "versions")
+	launcherDir := filepath.Join(homeDir, "launcher")
+	versionsDir := filepath.Join(launcherDir, "versions")
 
 	logrus.StandardLogger().SetLevel(logrus.DebugLevel)
 	logrus.StandardLogger().SetFormatter(&logging.Formatter{})
 
 	r := Launcher{
 		homeDir:     homeDir,
-		runtimeDir:  runtimeDir,
+		launcherDir: launcherDir,
 		versionsDir: versionsDir,
 		logger:      logrus.NewEntry(logrus.StandardLogger()).WithField("name", "core"),
 		configFile:  configFile,
@@ -58,13 +53,30 @@ func NewLauncher(homeDir string) (*Launcher, error) {
 	return &r, nil
 }
 
+func initConfig(configFile string) (*config.Config, error) {
+	var cfg *config.Config
+
+	f, err := os.Open(configFile)
+	if err != nil {
+		cfg = &config.Config{}
+	} else {
+		defer f.Close()
+		cfg, err = config.ParseConfig(f)
+		if err != nil {
+			return nil, fmt.Errorf("parse config: %w", err)
+		}
+	}
+
+	return cfg, nil
+}
+
 func (t *Launcher) init() error {
-	if _, err := os.Stat(t.runtimeDir); os.IsNotExist(err) {
-		if err := os.Mkdir(t.runtimeDir, 0755); err != nil {
+	if _, err := os.Stat(t.launcherDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(t.launcherDir, 0755); err != nil {
 			return fmt.Errorf("mkdir: %w", err)
 		}
 	}
-	err := os.Chdir(t.runtimeDir)
+	err := os.Chdir(t.launcherDir)
 	if err != nil {
 		return fmt.Errorf("chdir: %w", err)
 	}

@@ -124,7 +124,7 @@ func (t *GitHub) getDownloadUrl(runId uint) (string, error) {
 }
 
 func (t *GitHub) getLastRunOfBranch(branch string, commit string) (*WorkflowRun, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/ExchangeUnion/xud-docker/actions/workflows/launcher-build.yml/runs?branch=%s", branch)
+	url := fmt.Sprintf("https://api.github.com/repos/ExchangeUnion/xud-docker/actions/workflows/build.yml/runs?branch=%s", branch)
 	body, err := t.doGet(url)
 	if err != nil {
 		return nil, err
